@@ -1,3 +1,4 @@
+import { ProvidersList } from "@/features/providers/providers-list";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/")({
@@ -14,6 +15,7 @@ function HomePage() {
       <Link to="/demo" className="underline">
         View component demo
       </Link>
+      <ProvidersList />
     </div>
   );
 }

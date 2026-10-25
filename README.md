@@ -74,6 +74,16 @@ Find the project ref in the Supabase dashboard URL or under Project Settings.
 | `accounts`     | Individual accounts under a provider, with a monthly limit        |
 | `transactions` | Cash in/out entries per account; `amount` and `fee` are `numeric` |
 
+## Query keys
+
+All keys come from `src/lib/query-keys.ts`. Never write key arrays inline.
+
+- A key is an array. The first element is the plural resource name: `['accounts']`
+- A single item adds its id: `['accounts', id]`
+- Filters go last, as one object: `['transactions', { date }]`
+- Keys go from general to specific, so invalidating `['transactions']`
+  refreshes every transactions query
+
 ## Definition of Done
 
 - Acceptance criteria met
