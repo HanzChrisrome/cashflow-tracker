@@ -6,6 +6,7 @@ import { AccountsCard } from "@/components/dashboard/account-card";
 import { ActivitiesTable } from "@/components/dashboard/activities-table";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -13,6 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { sumPeso } from "@/lib/format";
+import { useAccounts } from "@/features/accounts/hooks";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: OverviewPage,
@@ -20,6 +23,7 @@ export const Route = createFileRoute("/_authenticated/")({
 
 function OverviewPage() {
   const [period, setPeriod] = useState("This Month");
+  const accountsQuery = useAccounts();
 
   return (
     <div className="space-y-6">
@@ -52,8 +56,16 @@ function OverviewPage() {
         <StatCard
           variant="filled"
           title="Total Balance"
-          subtitle="Across 4 accounts"
-          amount="₱100,853.95"
+          subtitle={
+            accountsQuery.data
+              ? `Across ${accountsQuery.data.length} accounts`
+              : "Across your accounts"
+          }
+          amount={
+            accountsQuery.data
+              ? sumPeso(accountsQuery.data.map((account) => account.amount))
+              : "—"
+          }
           change="+2.5%"
           footerLabel="View accounts"
           icon={Wallet}
@@ -78,7 +90,24 @@ function OverviewPage() {
 
       <div className="grid gap-4 lg:grid-cols-5">
         <div className="lg:col-span-2">
-          <AccountsCard />
+          {accountsQuery.isPending ? (
+            <Card className="h-full">
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                Loading accounts…
+              </CardContent>
+            </Card>
+          ) : accountsQuery.isError ? (
+            <Card className="h-full">
+              <CardContent
+                role="alert"
+                className="py-8 text-center text-sm text-destructive"
+              >
+                Could not load accounts: {accountsQuery.error.message}
+              </CardContent>
+            </Card>
+          ) : (
+            <AccountsCard accounts={accountsQuery.data} />
+          )}
         </div>
         <div className="lg:col-span-3">
           <ChartCard />

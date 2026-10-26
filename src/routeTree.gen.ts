@@ -21,6 +21,9 @@ import { Route as AuthenticatedRecurringRouteImport } from './routes/_authentica
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSubscriptionsRouteImport } from './routes/_authenticated/subscriptions'
 import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
+import { Route as AuthenticatedAccountsIndexRouteImport } from './routes/_authenticated/accounts.index'
+import { Route as AuthenticatedAccountsNewRouteImport } from './routes/_authenticated/accounts.new'
+import { Route as AuthenticatedAccountsAccountIdEditRouteImport } from './routes/_authenticated/accounts.$accountId.edit'
 
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
@@ -83,6 +86,24 @@ const AuthenticatedTransactionsRoute =
     path: '/transactions',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAccountsIndexRoute =
+  AuthenticatedAccountsIndexRouteImport.update({
+    id: '/accounts/',
+    path: '/accounts/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAccountsNewRoute =
+  AuthenticatedAccountsNewRouteImport.update({
+    id: '/accounts/new',
+    path: '/accounts/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAccountsAccountIdEditRoute =
+  AuthenticatedAccountsAccountIdEditRouteImport.update({
+    id: '/accounts/$accountId/edit',
+    path: '/accounts/$accountId/edit',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -96,6 +117,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
+  '/accounts/new': typeof AuthenticatedAccountsNewRoute
+  '/accounts/': typeof AuthenticatedAccountsIndexRoute
+  '/accounts/$accountId/edit': typeof AuthenticatedAccountsAccountIdEditRoute
 }
 export interface FileRoutesByTo {
   '/demo': typeof DemoRoute
@@ -109,6 +133,9 @@ export interface FileRoutesByTo {
   '/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/transactions': typeof AuthenticatedTransactionsRoute
   '/': typeof AuthenticatedIndexRoute
+  '/accounts/new': typeof AuthenticatedAccountsNewRoute
+  '/accounts': typeof AuthenticatedAccountsIndexRoute
+  '/accounts/$accountId/edit': typeof AuthenticatedAccountsAccountIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -124,6 +151,9 @@ export interface FileRoutesById {
   '/_authenticated/subscriptions': typeof AuthenticatedSubscriptionsRoute
   '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/accounts/new': typeof AuthenticatedAccountsNewRoute
+  '/_authenticated/accounts/': typeof AuthenticatedAccountsIndexRoute
+  '/_authenticated/accounts/$accountId/edit': typeof AuthenticatedAccountsAccountIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -139,6 +169,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/subscriptions'
     | '/transactions'
+    | '/accounts/new'
+    | '/accounts/'
+    | '/accounts/$accountId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/demo'
@@ -152,6 +185,9 @@ export interface FileRouteTypes {
     | '/subscriptions'
     | '/transactions'
     | '/'
+    | '/accounts/new'
+    | '/accounts'
+    | '/accounts/$accountId/edit'
   id:
     | '__root__'
     | '/_authenticated'
@@ -166,6 +202,9 @@ export interface FileRouteTypes {
     | '/_authenticated/subscriptions'
     | '/_authenticated/transactions'
     | '/_authenticated/'
+    | '/_authenticated/accounts/new'
+    | '/_authenticated/accounts/'
+    | '/_authenticated/accounts/$accountId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -260,6 +299,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/accounts/': {
+      id: '/_authenticated/accounts/'
+      path: '/accounts'
+      fullPath: '/accounts/'
+      preLoaderRoute: typeof AuthenticatedAccountsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/accounts/new': {
+      id: '/_authenticated/accounts/new'
+      path: '/accounts/new'
+      fullPath: '/accounts/new'
+      preLoaderRoute: typeof AuthenticatedAccountsNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/accounts/$accountId/edit': {
+      id: '/_authenticated/accounts/$accountId/edit'
+      path: '/accounts/$accountId/edit'
+      fullPath: '/accounts/$accountId/edit'
+      preLoaderRoute: typeof AuthenticatedAccountsAccountIdEditRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
@@ -273,6 +333,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSubscriptionsRoute: typeof AuthenticatedSubscriptionsRoute
   AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedAccountsNewRoute: typeof AuthenticatedAccountsNewRoute
+  AuthenticatedAccountsIndexRoute: typeof AuthenticatedAccountsIndexRoute
+  AuthenticatedAccountsAccountIdEditRoute: typeof AuthenticatedAccountsAccountIdEditRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -285,6 +348,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSubscriptionsRoute: AuthenticatedSubscriptionsRoute,
   AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedAccountsNewRoute: AuthenticatedAccountsNewRoute,
+  AuthenticatedAccountsIndexRoute: AuthenticatedAccountsIndexRoute,
+  AuthenticatedAccountsAccountIdEditRoute:
+    AuthenticatedAccountsAccountIdEditRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

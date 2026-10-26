@@ -1,11 +1,13 @@
 import { AuthListener } from "@/features/auth/auth-listener";
 import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
+import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createRootRoute({
   component: () => (
     <>
       <AuthListener />
       <Outlet />
+      <Toaster richColors position="top-center" />
     </>
   ),
   notFoundComponent: () => (
