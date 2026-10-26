@@ -1,5 +1,6 @@
 import { Bar, BarChart, Cell, XAxis } from "recharts";
 
+import { formatPeso } from "@/lib/format";
 import {
   Card,
   CardContent,
@@ -27,10 +28,6 @@ export const placeholderChartData: ChartDatum[] = [
 const chartConfig = {
   total: { label: "Cash In" },
 } satisfies ChartConfig;
-
-function formatPeso(value: number) {
-  return `₱${value.toLocaleString("en-PH")}`;
-}
 
 export function ChartCard({
   data = placeholderChartData,
