@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/lib/supabase";
+import { AppShell } from "@/components/layout/app-shell";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -9,5 +10,9 @@ export const Route = createFileRoute("/_authenticated")({
     }
     return { session: data.session };
   },
-  component: Outlet,
+  component: () => (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  ),
 });
