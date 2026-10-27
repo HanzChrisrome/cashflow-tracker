@@ -40,7 +40,8 @@ describe("summarizeTransactions", () => {
 
     expect(summary.inCentavos).toBe(10000);
     expect(summary.outCentavos).toBe(5500);
-    expect(summary.netCentavos).toBe(4500);
+    // Net is the balance movement: cash out minus cash in.
+    expect(summary.netCentavos).toBe(-4500);
   });
 
   it("ignores fees that are not counted", () => {
@@ -147,25 +148,25 @@ describe("percentChangeLabel", () => {
 });
 
 describe("transactionEffectCentavos", () => {
-  it("adds the amount plus the counted fee for cash in", () => {
-    expect(transactionEffectCentavos("cash_in", "100", "5", true)).toBe(10500);
+  it("removes the amount plus the counted fee for cash in", () => {
+    expect(transactionEffectCentavos("cash_in", "100", "5", true)).toBe(-10500);
   });
 
-  it("removes the amount plus the counted fee for cash out", () => {
-    expect(transactionEffectCentavos("cash_out", "100", "5", true)).toBe(
-      -10500,
-    );
+  it("adds the amount plus the counted fee for cash out", () => {
+    expect(transactionEffectCentavos("cash_out", "100", "5", true)).toBe(10500);
   });
 
   it("moves exactly the amount when the fee is not counted", () => {
-    expect(transactionEffectCentavos("cash_in", "100", "5", false)).toBe(10000);
-    expect(transactionEffectCentavos("cash_out", "100", "5", false)).toBe(
+    expect(transactionEffectCentavos("cash_in", "100", "5", false)).toBe(
       -10000,
+    );
+    expect(transactionEffectCentavos("cash_out", "100", "5", false)).toBe(
+      10000,
     );
   });
 
   it("rounds to centavos", () => {
-    expect(transactionEffectCentavos("cash_in", "0.1", "0.05", true)).toBe(15);
+    expect(transactionEffectCentavos("cash_in", "0.1", "0.05", true)).toBe(-15);
   });
 });
 

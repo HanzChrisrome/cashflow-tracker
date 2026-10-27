@@ -51,8 +51,8 @@ describe("TransactionsTable", () => {
     expect(screen.getAllByText("Cash Out").length).toBeGreaterThan(0);
     expect(screen.getAllByText("GCash · Main").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Maya · Store").length).toBeGreaterThan(0);
-    expect(screen.getByText("+₱5,000.00")).toBeInTheDocument();
-    expect(screen.getByText("-₱2,350.00")).toBeInTheDocument();
+    expect(screen.getByText("-₱5,000.00")).toBeInTheDocument();
+    expect(screen.getByText("+₱2,350.00")).toBeInTheDocument();
     expect(screen.getByText("₱15.00")).toBeInTheDocument();
     expect(screen.getByText(/Oct 26, 2026/)).toBeInTheDocument();
   });

@@ -11,12 +11,6 @@ export type TransactionSummary = {
   netCentavos: number;
 };
 
-/**
- * Effect a transaction has on its account's balance, in centavos.
- * When the fee is counted it rides on top of the amount: cash in credits
- * amount + fee, cash out deducts amount + fee. Uncounted fees never touch
- * the balance.
- */
 export function transactionEffectCentavos(
   type: TransactionType,
   amount: string | number,
@@ -26,7 +20,7 @@ export function transactionEffectCentavos(
   const amountCentavos = Math.round(Number(amount) * 100);
   const feePart = countFee ? Math.round(Number(fee) * 100) : 0;
   const magnitude = amountCentavos + feePart;
-  return type === "cash_in" ? magnitude : -magnitude;
+  return type === "cash_in" ? -magnitude : magnitude;
 }
 
 export function summarizeTransactions(
@@ -54,7 +48,8 @@ export function summarizeTransactions(
     }
   }
 
-  return { inCentavos, outCentavos, netCentavos: inCentavos - outCentavos };
+  // Net change to account balances: cash out credits, cash in debits.
+  return { inCentavos, outCentavos, netCentavos: outCentavos - inCentavos };
 }
 
 export function periodRange(period: Period, now = new Date()): DateRange {

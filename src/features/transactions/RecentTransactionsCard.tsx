@@ -62,12 +62,12 @@ export function RecentTransactionsCard({
                 <span
                   className={cn(
                     "flex size-9 shrink-0 items-center justify-center rounded-lg",
-                    transaction.type === "cash_in"
+                    transaction.type === "cash_out"
                       ? "bg-primary-tint text-primary"
                       : "bg-destructive/10 text-destructive",
                   )}
                 >
-                  {transaction.type === "cash_in" ? (
+                  {transaction.type === "cash_out" ? (
                     <ArrowDownLeft className="size-4" />
                   ) : (
                     <ArrowUpRight className="size-4" />
@@ -85,12 +85,12 @@ export function RecentTransactionsCard({
                 <p
                   className={cn(
                     "shrink-0 text-sm font-semibold tabular-nums",
-                    transaction.type === "cash_in"
+                    transaction.type === "cash_out"
                       ? "text-success"
                       : "text-destructive",
                   )}
                 >
-                  {transaction.type === "cash_in" ? "+" : "-"}
+                  {transaction.type === "cash_out" ? "+" : "-"}
                   {formatPeso(transaction.amount)}
                 </p>
               </li>

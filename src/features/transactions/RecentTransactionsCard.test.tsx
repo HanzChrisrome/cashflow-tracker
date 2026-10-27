@@ -70,8 +70,8 @@ describe("RecentTransactionsCard", () => {
     expect(await screen.findByText("Recent Transactions")).toBeInTheDocument();
     expect(screen.getAllByText("Cash In").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Cash Out").length).toBeGreaterThan(0);
-    expect(screen.getByText("+₱5,000.00")).toBeInTheDocument();
-    expect(screen.getByText("-₱2,350.00")).toBeInTheDocument();
+    expect(screen.getByText("-₱5,000.00")).toBeInTheDocument();
+    expect(screen.getByText("+₱2,350.00")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "View all" })).toHaveAttribute(
       "href",
       "/transactions",

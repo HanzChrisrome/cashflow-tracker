@@ -83,7 +83,7 @@ function TransactionsPage() {
           amount={totalIn}
           change="+8.2%"
           footerLabel="View transactions"
-          icon={ArrowDownLeft}
+          icon={ArrowUpRight}
         />
         <StatCard
           title="Cash Out"
@@ -91,12 +91,12 @@ function TransactionsPage() {
           amount={totalOut}
           change="+3.4%"
           footerLabel="View transactions"
-          icon={ArrowUpRight}
+          icon={ArrowDownLeft}
         />
         <StatCard
           variant="filled"
           title="Net Cash Flow"
-          subtitle="Cash in minus cash out"
+          subtitle="Cash out minus cash in"
           amount={net}
           change="+5.1%"
           footerLabel="View transactions"

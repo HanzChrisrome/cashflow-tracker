@@ -71,13 +71,13 @@ function TypeToggle({
             className={cn(
               "flex h-12 items-center justify-center gap-2 rounded-xl border text-base font-medium transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
               active
-                ? type === "cash_in"
+                ? type === "cash_out"
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-foreground bg-foreground text-background"
                 : "border-border bg-card text-muted-foreground hover:text-foreground",
             )}
           >
-            {type === "cash_in" ? (
+            {type === "cash_out" ? (
               <ArrowDownLeft className="size-4" />
             ) : (
               <ArrowUpRight className="size-4" />
@@ -190,7 +190,7 @@ export function TransactionForm({
   }
 
   if (
-    watchedType === "cash_out" &&
+    watchedType === "cash_in" &&
     selectedAccount &&
     watchedAmount &&
     !Number.isNaN(Number(watchedAmount))
@@ -280,7 +280,7 @@ export function TransactionForm({
                   <p
                     className={cn(
                       "text-lg font-medium",
-                      watchedType === "cash_in"
+                      watchedType === "cash_out"
                         ? "text-success"
                         : "text-destructive",
                     )}
@@ -364,7 +364,7 @@ export function TransactionForm({
                     Count fee toward balance
                   </FormLabel>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Cash in credits the amount plus the fee; cash out deducts
+                    Cash out credits the amount plus the fee; cash in deducts
                     it.
                   </p>
                 </div>
