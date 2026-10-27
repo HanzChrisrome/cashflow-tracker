@@ -93,6 +93,12 @@ export async function getAccount(id: string): Promise<Account | null> {
   };
 }
 
+export async function deleteAccount(id: string) {
+  const { data, error } = await supabase.from("accounts").delete().eq("id", id);
+  if (error) throw error;
+  return data;
+}
+
 export async function listAccounts(): Promise<AccountListItem[]> {
   const { data, error } = await supabase
     .from("accounts")

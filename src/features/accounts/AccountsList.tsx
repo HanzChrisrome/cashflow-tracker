@@ -3,7 +3,7 @@ import { cn } from "cn";
 
 import { formatPeso } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { useAccounts } from "./hooks";
+import { useAccounts, useDeleteAccount } from "./hooks";
 
 function StatusLabel({ active }: { active: boolean }) {
   return (
@@ -26,6 +26,7 @@ function StatusLabel({ active }: { active: boolean }) {
 
 export function AccountsList() {
   const { data: accounts, isPending, isError, error } = useAccounts();
+  const deleteAccountMutation = useDeleteAccount();
 
   if (isPending)
     return <p className="text-sm text-muted-foreground">Loading accounts…</p>;
@@ -81,19 +82,38 @@ export function AccountsList() {
           </p>
           <div className="mt-3 flex items-center justify-between">
             <StatusLabel active={account.isActive} />
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-xl"
-              render={
-                <Link
-                  to="/accounts/$accountId/edit"
-                  params={{ accountId: account.id }}
-                />
-              }
-            >
-              Edit
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-xl"
+                render={
+                  <Link
+                    to="/accounts/$accountId/edit"
+                    params={{ accountId: account.id }}
+                  />
+                }
+              >
+                Edit
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="rounded-xl"
+                disabled={deleteAccountMutation.isPending}
+                onClick={() => {
+                  const confirmed = window.confirm(
+                    `Are you sure you want to delete "${account.nickname}"? This action cannot be undone.`,
+                  );
+
+                  if (confirmed) {
+                    deleteAccountMutation.mutate(account.id);
+                  }
+                }}
+              >
+                Delete
+              </Button>
+            </div>
           </div>
         </li>
       ))}
