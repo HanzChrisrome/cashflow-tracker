@@ -1,4 +1,5 @@
 import {
+  ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
   MoreHorizontal,
@@ -19,7 +20,8 @@ export type StatCardProps = {
   title: string;
   subtitle: string;
   amount: string;
-  change: string;
+  change?: string;
+  trend?: "up" | "down";
   footerLabel: string;
   icon: LucideIcon;
   variant?: "default" | "filled";
@@ -30,6 +32,7 @@ export function StatCard({
   subtitle,
   amount,
   change,
+  trend = "up",
   footerLabel,
   icon: Icon,
   variant = "default",
@@ -95,17 +98,23 @@ export function StatCard({
           <p className="text-2xl font-bold tracking-tight tabular-nums">
             {amount}
           </p>
-          <span
-            className={cn(
-              "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium",
-              filled
-                ? "bg-primary-foreground/15 text-primary-foreground"
-                : "bg-primary-tint text-primary",
-            )}
-          >
-            {change}
-            <ArrowUpRight className="size-3" />
-          </span>
+          {change && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium",
+                filled
+                  ? "bg-primary-foreground/15 text-primary-foreground"
+                  : "bg-primary-tint text-primary",
+              )}
+            >
+              {change}
+              {trend === "down" ? (
+                <ArrowDownRight className="size-3" />
+              ) : (
+                <ArrowUpRight className="size-3" />
+              )}
+            </span>
+          )}
         </div>
       </CardContent>
       <CardFooter className="mt-2 border-t bg-transparent px-5 py-3">

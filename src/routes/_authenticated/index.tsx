@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
 
 import { AccountsCard } from "@/components/dashboard/account-card";
-import { ActivitiesTable } from "@/components/dashboard/activities-table";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,16 +13,49 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { sumPeso } from "@/lib/format";
+import { formatPeso, sumPeso } from "@/lib/format";
+import { DEFAULT_WARNING_THRESHOLD } from "@/lib/limit-status";
+import { LimitAlertBanner } from "@/components/dashboard/limit-alert-banner";
 import { useAccounts } from "@/features/accounts/hooks";
+import { RecentTransactionsCard } from "@/features/transactions/RecentTransactionsCard";
+import { useTransactions } from "@/features/transactions/hooks";
+import {
+  monthlyCashIn,
+  percentChangeLabel,
+  periodRange,
+  previousPeriodRange,
+  summarizeTransactions,
+  type Period,
+} from "@/features/transactions/totals";
+import { useAppSettings } from "@/hooks/use-app-settings";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: OverviewPage,
 });
 
 function OverviewPage() {
-  const [period, setPeriod] = useState("This Month");
+  const [period, setPeriod] = useState<Period>("This Month");
   const accountsQuery = useAccounts();
+  const transactionsQuery = useTransactions();
+  const settingsQuery = useAppSettings();
+  const threshold = settingsQuery.data ?? DEFAULT_WARNING_THRESHOLD;
+
+  const transactions = transactionsQuery.data ?? [];
+  const current = summarizeTransactions(transactions, periodRange(period));
+  const previous = summarizeTransactions(
+    transactions,
+    previousPeriodRange(period),
+  );
+  const cashInChange = percentChangeLabel(
+    current.inCentavos,
+    previous.inCentavos,
+  );
+  const cashOutChange = percentChangeLabel(
+    current.outCentavos,
+    previous.outCentavos,
+  );
+  const chartData = monthlyCashIn(transactions);
+  const chartTotal = sumPeso(chartData.map((datum) => datum.total));
 
   return (
     <div className="space-y-6">
@@ -36,7 +68,7 @@ function OverviewPage() {
         </div>
         <Select
           value={period}
-          onValueChange={(value) => setPeriod(value as string)}
+          onValueChange={(value) => setPeriod(value as Period)}
         >
           <SelectTrigger
             aria-label="Select period"
@@ -66,30 +98,31 @@ function OverviewPage() {
               ? sumPeso(accountsQuery.data.map((account) => account.amount))
               : "—"
           }
-          change="+2.5%"
           footerLabel="View accounts"
           icon={Wallet}
         />
         <StatCard
           title="Cash In"
-          subtitle="This month"
-          amount="₱48,500.00"
-          change="+3.2%"
+          subtitle={period}
+          amount={formatPeso(current.inCentavos / 100)}
+          change={cashInChange?.label}
+          trend={cashInChange?.trend}
           footerLabel="View transactions"
           icon={ArrowDownLeft}
         />
         <StatCard
           title="Cash Out"
-          subtitle="This month"
-          amount="₱18,640.50"
-          change="+1.8%"
+          subtitle={period}
+          amount={formatPeso(current.outCentavos / 100)}
+          change={cashOutChange?.label}
+          trend={cashOutChange?.trend}
           footerLabel="View transactions"
           icon={ArrowUpRight}
         />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-5">
-        <div className="lg:col-span-2">
+        <div className="space-y-4 lg:col-span-2">
           {accountsQuery.isPending ? (
             <Card className="h-full">
               <CardContent className="py-8 text-center text-sm text-muted-foreground">
@@ -106,15 +139,32 @@ function OverviewPage() {
               </CardContent>
             </Card>
           ) : (
-            <AccountsCard accounts={accountsQuery.data} />
+            <>
+              <LimitAlertBanner
+                accounts={accountsQuery.data}
+                threshold={threshold}
+              />
+              <AccountsCard
+                accounts={accountsQuery.data}
+                threshold={threshold}
+              />
+            </>
           )}
         </div>
         <div className="lg:col-span-3">
-          <ChartCard />
+          <ChartCard data={chartData} total={chartTotal} />
         </div>
       </div>
 
-      <ActivitiesTable />
+      {transactionsQuery.isPending ? (
+        <p className="text-sm text-muted-foreground">Loading transactions…</p>
+      ) : transactionsQuery.isError ? (
+        <p role="alert" className="text-sm text-destructive">
+          Could not load transactions: {transactionsQuery.error.message}
+        </p>
+      ) : (
+        <RecentTransactionsCard transactions={transactions} />
+      )}
     </div>
   );
 }
