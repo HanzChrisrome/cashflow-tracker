@@ -113,7 +113,8 @@ export function createTransactionSchema({
         ),
     })
     .superRefine((values, ctx) => {
-      if (values.type === "cash_in") return;
+      // Cash in debits the account, so only it can overdraw the balance.
+      if (values.type === "cash_out") return;
 
       const account = accounts.find((item) => item.id === values.accountId);
       if (!account) return;

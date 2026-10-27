@@ -108,7 +108,7 @@ function OverviewPage() {
           change={cashInChange?.label}
           trend={cashInChange?.trend}
           footerLabel="View transactions"
-          icon={ArrowDownLeft}
+          icon={ArrowUpRight}
         />
         <StatCard
           title="Cash Out"
@@ -117,7 +117,7 @@ function OverviewPage() {
           change={cashOutChange?.label}
           trend={cashOutChange?.trend}
           footerLabel="View transactions"
-          icon={ArrowUpRight}
+          icon={ArrowDownLeft}
         />
       </div>
 

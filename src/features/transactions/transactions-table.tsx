@@ -88,12 +88,12 @@ export function TransactionsTable({
                       <span
                         className={cn(
                           "flex size-8 shrink-0 items-center justify-center rounded-lg",
-                          transaction.type === "cash_in"
+                          transaction.type === "cash_out"
                             ? "bg-primary-tint text-primary"
                             : "bg-destructive/10 text-destructive",
                         )}
                       >
-                        {transaction.type === "cash_in" ? (
+                        {transaction.type === "cash_out" ? (
                           <ArrowDownLeft className="size-4" />
                         ) : (
                           <ArrowUpRight className="size-4" />
@@ -112,12 +112,12 @@ export function TransactionsTable({
                   <TableCell
                     className={cn(
                       "text-right font-medium tabular-nums",
-                      transaction.type === "cash_in"
+                      transaction.type === "cash_out"
                         ? "text-success"
                         : "text-destructive",
                     )}
                   >
-                    {transaction.type === "cash_in" ? "+" : "-"}
+                    {transaction.type === "cash_out" ? "+" : "-"}
                     {formatPeso(transaction.amount)}
                   </TableCell>
                   <TableCell className="hidden text-right text-muted-foreground sm:table-cell">

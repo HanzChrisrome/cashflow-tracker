@@ -31,7 +31,7 @@ const accounts = [
 
 const existing: TransactionFormTransaction = {
   id: "tx-1",
-  type: "cash_out",
+  type: "cash_in",
   accountId: "a2",
   amount: "2350",
   fee: "15",
@@ -140,12 +140,12 @@ describe("TransactionForm validation", () => {
     expect(schema.safeParse(base).success).toBe(true);
   });
 
-  it("blocks cash outs above the account balance at the schema level", () => {
+  it("blocks cash ins above the account balance at the schema level", () => {
     const schema = createTransactionSchema({
       accounts: [{ id: "a1", amount: "1000" }],
     });
     const base = {
-      type: "cash_out" as const,
+      type: "cash_in" as const,
       accountId: "a1",
       fee: "0",
       countFee: true,
@@ -184,7 +184,7 @@ describe("TransactionForm validation", () => {
       accounts: [{ id: "a1", amount: "500" }],
       original: {
         accountId: "a1",
-        type: "cash_out",
+        type: "cash_in",
         amount: "2350",
         fee: "15",
         countFee: true,
@@ -193,7 +193,7 @@ describe("TransactionForm validation", () => {
 
     // Available = 500 + (2350 + 15) = 2865.
     const blocked = schema.safeParse({
-      type: "cash_out",
+      type: "cash_in",
       accountId: "a1",
       amount: "2865.01",
       fee: "0",
@@ -209,7 +209,7 @@ describe("TransactionForm validation", () => {
 
     expect(
       schema.safeParse({
-        type: "cash_out",
+        type: "cash_in",
         accountId: "a1",
         amount: "2865",
         fee: "0",
@@ -221,12 +221,12 @@ describe("TransactionForm validation", () => {
 });
 
 describe("TransactionForm balance checks", () => {
-  it("blocks a cash out above the account balance and makes no API call", async () => {
+  it("blocks a cash in above the account balance and makes no API call", async () => {
     const user = userEvent.setup();
     const onSaved = vi.fn();
     renderForm(<TransactionForm accounts={accounts} onSaved={onSaved} />);
 
-    await user.click(screen.getByRole("button", { name: "Cash Out" }));
+    await user.click(screen.getByRole("button", { name: "Cash In" }));
     await selectAccount(user, "GCash · Main");
     await user.type(screen.getByLabelText("Amount"), "10500");
     await user.click(screen.getByRole("button", { name: "Save transaction" }));
@@ -241,11 +241,11 @@ describe("TransactionForm balance checks", () => {
     expect(onSaved).not.toHaveBeenCalled();
   });
 
-  it("blocks a cash out when the counted fee pushes it over the balance", async () => {
+  it("blocks a cash in when the counted fee pushes it over the balance", async () => {
     const user = userEvent.setup();
     renderForm(<TransactionForm accounts={accounts} onSaved={vi.fn()} />);
 
-    await user.click(screen.getByRole("button", { name: "Cash Out" }));
+    await user.click(screen.getByRole("button", { name: "Cash In" }));
     await selectAccount(user, "GCash · Main");
     await user.type(screen.getByLabelText("Amount"), "9800");
     await user.type(screen.getByLabelText("Fee"), "500");
@@ -261,13 +261,13 @@ describe("TransactionForm balance checks", () => {
     expect(createTransactionMock).not.toHaveBeenCalled();
   });
 
-  it("allows the same cash out when the fee is not counted", async () => {
+  it("allows the same cash in when the fee is not counted", async () => {
     createTransactionMock.mockResolvedValue({ id: "new-tx" } as never);
     const onSaved = vi.fn();
     const user = userEvent.setup();
     renderForm(<TransactionForm accounts={accounts} onSaved={onSaved} />);
 
-    await user.click(screen.getByRole("button", { name: "Cash Out" }));
+    await user.click(screen.getByRole("button", { name: "Cash In" }));
     await selectAccount(user, "GCash · Main");
     await user.type(screen.getByLabelText("Amount"), "9800");
     await user.type(screen.getByLabelText("Fee"), "500");
@@ -297,7 +297,7 @@ describe("TransactionForm balance checks", () => {
     await user.type(screen.getByLabelText("Amount"), "500");
 
     expect(screen.getByText("Balance after transaction")).toBeInTheDocument();
-    expect(screen.getByText("₱10,500.00")).toBeInTheDocument();
+    expect(screen.getByText("₱9,500.00")).toBeInTheDocument();
   });
 
   it("previews the balance after the edit, not a second transaction", async () => {
@@ -310,7 +310,7 @@ describe("TransactionForm balance checks", () => {
       />,
     );
 
-    // Maya holds 5000, which already includes the original 2350 + 15 cash out.
+    // Maya holds 5000, which already includes the original 2350 + 15 cash in.
     // Editing the amount down to 1000 should return the difference:
     // 5000 + 2365 (reversed) - 1015 (new) = 6350 — not 5000 - 1015.
     await setInput(user, "Amount", "1000");
@@ -323,7 +323,7 @@ describe("TransactionForm balance checks", () => {
     const user = userEvent.setup();
     renderForm(<TransactionForm accounts={accounts} onSaved={vi.fn()} />);
 
-    await user.click(screen.getByRole("button", { name: "Cash Out" }));
+    await user.click(screen.getByRole("button", { name: "Cash In" }));
     await selectAccount(user, "GCash · Main");
     await user.type(screen.getByLabelText("Amount"), "12000");
 
@@ -346,7 +346,7 @@ describe("TransactionForm balance checks", () => {
       />,
     );
 
-    // Original cash out of 2350 + 15 is returned to the balance first:
+    // Original cash in of 2350 + 15 is returned to the balance first:
     // available = 500 + 2365 = 2865.
     await setInput(user, "Amount", "2900");
     await user.click(screen.getByRole("button", { name: "Save changes" }));
@@ -418,7 +418,7 @@ describe("TransactionForm success", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Cash Out" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Cash In" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -437,7 +437,7 @@ describe("TransactionForm success", () => {
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
     expect(updateTransactionMock).toHaveBeenCalledTimes(1);
     expect(updateTransactionMock).toHaveBeenCalledWith("tx-1", {
-      type: "cash_out",
+      type: "cash_in",
       accountId: "a2",
       amount: "3000",
       fee: "15",
