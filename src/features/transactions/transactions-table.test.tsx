@@ -24,6 +24,7 @@ const transactions: TransactionItem[] = [
     fee: "15",
     countFee: true,
     timestamp: "2026-10-25T16:05",
+    note: "Customer reference #123",
   },
   {
     id: "tx-3",
@@ -69,6 +70,68 @@ describe("TransactionsTable", () => {
     const counted = screen.getAllByText(/counted/);
     expect(counted).toHaveLength(1);
     expect(counted[0].closest("td")).toHaveTextContent("₱15.00");
+  });
+
+  it("shows notes in the note column and a dash when empty", () => {
+    render(
+      <TransactionsTable
+        transactions={transactions}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Customer reference #123")).toBeInTheDocument();
+    expect(screen.getAllByText("-")).toHaveLength(2);
+  });
+
+  it("opens the note dialog from the view note button", async () => {
+    const user = userEvent.setup();
+    render(
+      <TransactionsTable
+        transactions={transactions}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "View note" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(dialog).toHaveTextContent("Customer reference #123");
+  });
+
+  it("paginates transactions ten at a time", async () => {
+    const user = userEvent.setup();
+    const many = Array.from({ length: 12 }, (_, index) => ({
+      ...transactions[index % transactions.length],
+      id: `tx-${index + 1}`,
+    }));
+    render(
+      <TransactionsTable
+        transactions={many}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getAllByRole("button", { name: /Edit/ })).toHaveLength(10);
+    expect(screen.getByText(/Showing/)).toHaveTextContent(
+      "Showing 1–10 of 12 transactions",
+    );
+
+    const previous = screen.getByRole("button", { name: "Previous" });
+    const next = screen.getByRole("button", { name: "Next" });
+    expect(previous).toBeDisabled();
+    expect(next).toBeEnabled();
+
+    await user.click(next);
+
+    expect(screen.getAllByRole("button", { name: /Edit/ })).toHaveLength(2);
+    expect(screen.getByText(/Showing/)).toHaveTextContent(
+      "Showing 11–12 of 12 transactions",
+    );
+    expect(next).toBeDisabled();
   });
 
   it("calls onEdit with the transaction when its Edit button is pressed", async () => {
@@ -117,5 +180,20 @@ describe("TransactionsTable", () => {
     );
 
     expect(screen.getByText("No transactions yet.")).toBeInTheDocument();
+  });
+
+  it("shows a custom empty message when provided", () => {
+    render(
+      <TransactionsTable
+        transactions={[]}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        emptyMessage="No transactions in this range."
+      />,
+    );
+
+    expect(
+      screen.getByText("No transactions in this range."),
+    ).toBeInTheDocument();
   });
 });

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { TransactionItem } from "./api";
 import {
+  customDateRange,
+  filterTransactionsByRange,
   monthlyCashIn,
   percentChangeLabel,
   periodRange,
@@ -167,6 +169,48 @@ describe("transactionEffectCentavos", () => {
 
   it("rounds to centavos", () => {
     expect(transactionEffectCentavos("cash_in", "0.1", "0.05", true)).toBe(-15);
+  });
+});
+
+describe("filterTransactionsByRange", () => {
+  const list = [
+    tx("1", "cash_in", "100", "0", "2026-09-30T23:59"),
+    tx("2", "cash_in", "200", "0", "2026-10-01T00:00"),
+    tx("3", "cash_in", "300", "0", "2026-10-26T23:59"),
+    tx("4", "cash_in", "400", "0", "2026-10-27T00:00"),
+  ];
+
+  it("keeps transactions inside the range (start inclusive, end exclusive)", () => {
+    const filtered = filterTransactionsByRange(list, {
+      start: new Date(2026, 9, 1),
+      end: new Date(2026, 9, 27),
+    });
+    expect(filtered.map((transaction) => transaction.id)).toEqual(["2", "3"]);
+  });
+
+  it("allows open-ended ranges", () => {
+    const fromOct2 = filterTransactionsByRange(list, {
+      start: new Date(2026, 9, 2),
+    });
+    expect(fromOct2.map((transaction) => transaction.id)).toEqual(["3", "4"]);
+
+    expect(filterTransactionsByRange(list)).toHaveLength(4);
+  });
+});
+
+describe("customDateRange", () => {
+  it("includes the whole 'to' day", () => {
+    const range = customDateRange("2026-10-01", "2026-10-05");
+    expect(range.start).toEqual(new Date(2026, 9, 1));
+    expect(range.end).toEqual(new Date(2026, 9, 6));
+
+    const list = [tx("1", "cash_in", "100", "0", "2026-10-05T23:59")];
+    expect(filterTransactionsByRange(list, range)).toHaveLength(1);
+  });
+
+  it("leaves missing sides unbounded", () => {
+    expect(customDateRange("", "2026-10-05").start).toBeUndefined();
+    expect(customDateRange("2026-10-01", "").end).toBeUndefined();
   });
 });
 
