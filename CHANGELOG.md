@@ -6,6 +6,15 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-28
+
+### Added
+
+### Security
+
+- Enabled row-level security and added user-specific fetching for the transactions table.
+- Updated gitignore to exclude database backup files.
+
 ## [1.1.0] - 2026-10-28
 
 ### Added
