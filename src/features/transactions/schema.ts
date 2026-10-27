@@ -111,6 +111,7 @@ export function createTransactionSchema({
           (value) => !Number.isNaN(new Date(value).getTime()),
           "Enter a valid date and time",
         ),
+      note: z.string().trim().optional(),
     })
     .superRefine((values, ctx) => {
       // Cash in debits the account, so only it can overdraw the balance.

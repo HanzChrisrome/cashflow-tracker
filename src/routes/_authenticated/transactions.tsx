@@ -5,6 +5,14 @@ import { toast } from "sonner";
 
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { formatPeso } from "@/lib/format";
 import { useAccounts } from "@/features/accounts/hooks";
 import { TransactionFormDialog } from "@/features/transactions/TransactionFormDialog";
@@ -13,12 +21,29 @@ import {
   useDeleteTransaction,
   useTransactions,
 } from "@/features/transactions/hooks";
-import { summarizeTransactions } from "@/features/transactions/totals";
+import {
+  customDateRange,
+  filterTransactionsByRange,
+  periodRange,
+  summarizeTransactions,
+  type Period,
+} from "@/features/transactions/totals";
 import type { TransactionItem } from "@/features/transactions/api";
+import { ConfirmDialog } from "@/components/dashboard/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/transactions")({
   component: TransactionsPage,
 });
+
+type TransactionsFilter = Period | "All Time" | "Custom Range";
+
+const FILTER_OPTIONS: TransactionsFilter[] = [
+  "All Time",
+  "This Month",
+  "Last Month",
+  "This Year",
+  "Custom Range",
+];
 
 function TransactionsPage() {
   const transactionsQuery = useTransactions();
@@ -27,6 +52,31 @@ function TransactionsPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionItem | null>(null);
+  const [filter, setFilter] = useState<TransactionsFilter>("All Time");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  const [toDelete, setToDelete] = useState<TransactionItem | null>(null);
+
+  function handleDelete(transaction: TransactionItem) {
+    setToDelete(transaction);
+  }
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    try {
+      await deleteTransaction.mutateAsync(toDelete.id);
+      toast.success("Transaction deleted.");
+    } catch (error) {
+      toast.error(
+        `Could not delete transaction: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    } finally {
+      setToDelete(null);
+    }
+  }
 
   const transactions = transactionsQuery.data ?? [];
   const accounts = (accountsQuery.data ?? []).map((account) => ({
@@ -34,7 +84,17 @@ function TransactionsPage() {
     label: `${account.providerName} · ${account.nickname}`,
     amount: account.amount,
   }));
-  const summary = summarizeTransactions(transactions);
+
+  const range =
+    filter === "All Time"
+      ? undefined
+      : filter === "Custom Range"
+        ? customDateRange(fromDate, toDate)
+        : periodRange(filter);
+
+  const filtered = filterTransactionsByRange(transactions, range);
+  const isFiltering = filtered.length !== transactions.length;
+  const summary = summarizeTransactions(filtered);
   const totalIn = formatPeso(summary.inCentavos / 100);
   const totalOut = formatPeso(summary.outCentavos / 100);
   const net = formatPeso(summary.netCentavos / 100);
@@ -49,16 +109,6 @@ function TransactionsPage() {
     setDialogOpen(true);
   }
 
-  async function handleDelete(transaction: TransactionItem) {
-    if (!window.confirm("Delete this transaction?")) return;
-    try {
-      await deleteTransaction.mutateAsync(transaction.id);
-      toast.success("Transaction deleted");
-    } catch {
-      toast.error("Could not delete the transaction");
-    }
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -70,35 +120,79 @@ function TransactionsPage() {
             Record and review cash in and cash out.
           </p>
         </div>
-        <Button onClick={openCreate} className="h-10 rounded-xl">
-          <Plus />
-          Add transaction
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={filter}
+            onValueChange={(value) => setFilter(value as TransactionsFilter)}
+          >
+            <SelectTrigger
+              aria-label="Filter by period"
+              className="h-10 w-40 rounded-xl"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FILTER_OPTIONS.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={openCreate} className="h-10 rounded-xl">
+            <Plus />
+            Add transaction
+          </Button>
+        </div>
       </div>
+
+      {filter === "Custom Range" && (
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              From
+            </span>
+            <Input
+              type="date"
+              value={fromDate}
+              onChange={(event) => setFromDate(event.target.value)}
+              className="h-10 w-44 rounded-xl"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              To
+            </span>
+            <Input
+              type="date"
+              value={toDate}
+              onChange={(event) => setToDate(event.target.value)}
+              className="h-10 w-44 rounded-xl"
+            />
+          </label>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           title="Cash In"
-          subtitle="All time"
+          subtitle={filter}
           amount={totalIn}
-          change="+8.2%"
           footerLabel="View transactions"
           icon={ArrowUpRight}
         />
         <StatCard
           title="Cash Out"
-          subtitle="All time"
+          subtitle={filter}
           amount={totalOut}
-          change="+3.4%"
           footerLabel="View transactions"
           icon={ArrowDownLeft}
         />
         <StatCard
           variant="filled"
           title="Net Cash Flow"
-          subtitle="Cash out minus cash in"
+          subtitle={`Cash out minus cash in · ${filter}`}
           amount={net}
-          change="+5.1%"
           footerLabel="View transactions"
           icon={Wallet}
         />
@@ -112,11 +206,38 @@ function TransactionsPage() {
         </p>
       ) : (
         <TransactionsTable
-          transactions={transactions}
+          key={`${filter}-${fromDate}-${toDate}`}
+          transactions={filtered}
           onEdit={openEdit}
           onDelete={handleDelete}
+          emptyMessage={
+            isFiltering
+              ? "No transactions in this range."
+              : "No transactions yet."
+          }
         />
       )}
+
+      <ConfirmDialog
+        open={toDelete !== null}
+        onOpenChange={() => setToDelete(null)}
+        title="Delete transaction?"
+        description={
+          toDelete && (
+            <>
+              This will permanently delete the{" "}
+              {toDelete.type === "cash_in" ? "cash in" : "cash out"} of{" "}
+              <span className="font-medium text-foreground">
+                {formatPeso(toDelete.amount)}
+              </span>{" "}
+              on {toDelete.accountLabel}. This can't be undone.
+            </>
+          )
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={confirmDelete}
+      />
 
       <TransactionFormDialog
         open={dialogOpen}

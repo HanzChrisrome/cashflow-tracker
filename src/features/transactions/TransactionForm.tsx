@@ -33,6 +33,7 @@ import {
 } from "./schema";
 import { useSaveTransaction } from "./hooks";
 import { transactionEffectCentavos } from "./totals";
+import { Textarea } from "@/components/ui/textarea";
 
 export type TransactionFormAccount = {
   id: string;
@@ -128,6 +129,7 @@ export function TransactionForm({
           fee: transaction.fee,
           timestamp: transaction.timestamp,
           countFee: transaction.countFee,
+          note: transaction.note,
         }
       : {
           type: "cash_in",
@@ -136,6 +138,7 @@ export function TransactionForm({
           fee: "0",
           timestamp: nowLocalInput(),
           countFee: false,
+          note: "",
         },
   });
 
@@ -375,6 +378,28 @@ export function TransactionForm({
                   />
                 </FormControl>
               </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="note"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Note</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Optional note"
+                  className="h-24 text-base"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                  ref={field.ref}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

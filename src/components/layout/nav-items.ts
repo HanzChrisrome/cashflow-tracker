@@ -1,14 +1,8 @@
 import {
   ArrowLeftRight,
-  CalendarClock,
-  ChartNoAxesColumn,
   CreditCard,
   LayoutDashboard,
-  LifeBuoy,
   LogOut,
-  MessageSquare,
-  Receipt,
-  Repeat,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -30,29 +24,14 @@ export const navGroups: NavGroup[] = [
     label: "Main Menu",
     items: [
       { title: "Dashboard", url: "/", icon: LayoutDashboard },
-      { title: "Analytics", url: "/analytics", icon: ChartNoAxesColumn },
       { title: "Transactions", url: "/transactions", icon: ArrowLeftRight },
       { title: "Accounts", url: "/accounts", icon: CreditCard },
-      { title: "Invoices", url: "/invoices", icon: Receipt, badge: "12" },
-    ],
-  },
-  {
-    label: "Features",
-    items: [
-      { title: "Recurring", url: "/recurring", icon: Repeat },
-      {
-        title: "Subscriptions",
-        url: "/subscriptions",
-        icon: CalendarClock,
-      },
-      { title: "Feedback", url: "/feedback", icon: MessageSquare, badge: "3" },
     ],
   },
   {
     label: "General",
     items: [
       { title: "Settings", url: "/settings", icon: Settings },
-      { title: "Help Desk", url: "/help-desk", icon: LifeBuoy },
       { title: "Log out", icon: LogOut },
     ],
   },

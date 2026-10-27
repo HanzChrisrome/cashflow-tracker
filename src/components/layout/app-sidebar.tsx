@@ -2,12 +2,10 @@ import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { Search, Wallet } from "lucide-react";
 
 import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -16,12 +14,19 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { isNavItemActive, navGroups } from "@/components/layout/nav-items";
+import { useEffect } from "react";
 
 export function AppSidebar() {
   const location = useLocation();
   const router = useRouter();
+  const { setOpenMobile } = useSidebar();
+
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [location.pathname, setOpenMobile]);
 
   async function logout() {
     await supabase.auth.signOut();
@@ -96,26 +101,6 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter className="p-3">
-        <div className="rounded-xl bg-primary-tint p-3">
-          <p className="text-sm font-semibold">Set up limits</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Cap monthly spending per wallet.
-          </p>
-          <div className="mt-3 flex gap-2">
-            <Button size="sm" className="h-8 flex-1 rounded-xl">
-              Get Started
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 flex-1 rounded-xl text-muted-foreground"
-            >
-              Later
-            </Button>
-          </div>
-        </div>
-      </SidebarFooter>
     </Sidebar>
   );
 }

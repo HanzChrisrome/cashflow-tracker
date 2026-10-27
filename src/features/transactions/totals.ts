@@ -5,6 +5,39 @@ export type Period = "This Month" | "Last Month" | "This Year";
 
 export type DateRange = { start: Date; end: Date };
 
+/** Like DateRange but either bound can be omitted (unbounded). */
+export type DateRangeFilter = { start?: Date; end?: Date };
+
+export function filterTransactionsByRange(
+  transactions: TransactionItem[],
+  range?: DateRangeFilter,
+): TransactionItem[] {
+  return transactions.filter((transaction) => {
+    const occurredAt = new Date(transaction.timestamp);
+    if (range?.start && occurredAt < range.start) return false;
+    if (range?.end && occurredAt >= range.end) return false;
+    return true;
+  });
+}
+
+/**
+ * Builds a filter from date input values ("YYYY-MM-DD"). The "to" day is
+ * included in full — the end bound is exclusive, so it is moved to the
+ * next day. Missing values leave that side unbounded.
+ */
+export function customDateRange(from: string, to: string): DateRangeFilter {
+  const range: DateRangeFilter = {};
+  if (from) {
+    range.start = new Date(`${from}T00:00`);
+  }
+  if (to) {
+    const end = new Date(`${to}T00:00`);
+    end.setDate(end.getDate() + 1);
+    range.end = end;
+  }
+  return range;
+}
+
 export type TransactionSummary = {
   inCentavos: number;
   outCentavos: number;
@@ -25,17 +58,12 @@ export function transactionEffectCentavos(
 
 export function summarizeTransactions(
   transactions: TransactionItem[],
-  range?: DateRange,
+  range?: DateRangeFilter,
 ): TransactionSummary {
   let inCentavos = 0;
   let outCentavos = 0;
 
-  for (const transaction of transactions) {
-    const occurredAt = new Date(transaction.timestamp);
-    if (range && (occurredAt < range.start || occurredAt >= range.end)) {
-      continue;
-    }
-
+  for (const transaction of filterTransactionsByRange(transactions, range)) {
     const amount = Math.round(Number(transaction.amount) * 100);
     const feePart = transaction.countFee
       ? Math.round(Number(transaction.fee) * 100)

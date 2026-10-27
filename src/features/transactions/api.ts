@@ -14,6 +14,7 @@ export type TransactionItem = {
   amount: string;
   fee: string;
   countFee: boolean;
+  note?: string;
   timestamp: string;
 };
 
@@ -23,6 +24,7 @@ type StoredTransaction = {
   amount: string;
   fee: string;
   count_fee: boolean;
+  note?: string;
 };
 
 function toRow(values: TransactionFormValues) {
@@ -33,13 +35,14 @@ function toRow(values: TransactionFormValues) {
     fee: Number(values.fee),
     count_fee: values.countFee,
     occurred_at: new Date(values.timestamp).toISOString(),
+    note: values.note || null,
   };
 }
 
 async function fetchStoredTransaction(id: string): Promise<StoredTransaction> {
   const { data, error } = await supabase
     .from("transactions")
-    .select("account_id, type, amount::text, fee::text, count_fee")
+    .select("account_id, type, amount::text, fee::text, count_fee, note")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -157,17 +160,20 @@ type TransactionRow = {
     nickname: string;
     providers: { name: string } | null;
   } | null;
+  note?: string;
 };
 
 export async function listTransactions(): Promise<TransactionItem[]> {
   const { data, error } = await supabase
     .from("transactions")
     .select(
-      "id, account_id, type, amount::text, fee::text, count_fee, occurred_at, accounts(nickname, providers(name))",
+      "id, account_id, type, amount::text, fee::text, count_fee, occurred_at, accounts(nickname, providers(name)), note",
     )
     .order("occurred_at", { ascending: false });
+
   if (error) throw error;
   if (!data) return [];
+
   return (data as unknown as TransactionRow[]).map((row) => ({
     id: row.id,
     type: row.type as TransactionFormValues["type"],
@@ -180,5 +186,6 @@ export async function listTransactions(): Promise<TransactionItem[]> {
     fee: String(row.fee),
     countFee: row.count_fee,
     timestamp: nowLocalInput(new Date(row.occurred_at)),
+    note: row.note || undefined,
   }));
 }

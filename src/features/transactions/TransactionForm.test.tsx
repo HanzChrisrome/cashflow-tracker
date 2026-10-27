@@ -370,6 +370,7 @@ describe("TransactionForm success", () => {
 
     await selectAccount(user, "GCash · Main");
     await user.type(screen.getByLabelText("Amount"), "1500.50");
+    await user.type(screen.getByLabelText("Note"), "Customer reference #123");
     await user.click(screen.getByRole("button", { name: "Save transaction" }));
 
     await waitFor(() => expect(onSaved).toHaveBeenCalled());
@@ -380,6 +381,7 @@ describe("TransactionForm success", () => {
       amount: "1500.50",
       fee: "0",
       countFee: false,
+      note: "Customer reference #123",
       timestamp: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
     });
     expect(toastMock.success).toHaveBeenCalledWith("Transaction recorded");
