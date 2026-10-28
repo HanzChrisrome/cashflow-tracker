@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowDownLeft, ArrowUpRight, Plus, Wallet } from "lucide-react";
 
 import { AccountsCard } from "@/components/dashboard/account-card";
 import { ChartCard } from "@/components/dashboard/chart-card";
 import { StatCard } from "@/components/dashboard/stat-card";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -66,22 +67,31 @@ function OverviewPage() {
             Track your cash flow across all accounts.
           </p>
         </div>
-        <Select
-          value={period}
-          onValueChange={(value) => setPeriod(value as Period)}
-        >
-          <SelectTrigger
-            aria-label="Select period"
-            className="h-9 w-36 rounded-xl"
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            render={<Link to="/transactions" search={{ new: true }} />}
+            className="h-10 rounded-xl"
           >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="This Month">This Month</SelectItem>
-            <SelectItem value="Last Month">Last Month</SelectItem>
-            <SelectItem value="This Year">This Year</SelectItem>
-          </SelectContent>
-        </Select>
+            <Plus />
+            Add transaction
+          </Button>
+          <Select
+            value={period}
+            onValueChange={(value) => setPeriod(value as Period)}
+          >
+            <SelectTrigger
+              aria-label="Select period"
+              className="h-9 w-36 rounded-xl"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="This Month">This Month</SelectItem>
+              <SelectItem value="Last Month">Last Month</SelectItem>
+              <SelectItem value="This Year">This Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

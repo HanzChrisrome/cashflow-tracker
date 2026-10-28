@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import {
   createTransaction,
@@ -8,10 +13,13 @@ import {
 } from "./api";
 import type { TransactionFormValues } from "./schema";
 
-export function useTransactions() {
+export function useTransactions(accountId?: string) {
   return useQuery({
-    queryKey: queryKeys.transactions.all,
-    queryFn: listTransactions,
+    queryKey: queryKeys.transactions.list({
+      accountId: accountId ?? undefined,
+    }),
+    queryFn: () => listTransactions(accountId),
+    placeholderData: keepPreviousData,
   });
 }
 
