@@ -6,6 +6,14 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-10-28
+
+### Added
+
+- Added an account filter for the transaction page for viewing specific data for each account.
+- Added a new status card in the transaction page for showing the total income, removing the net cash flow.
+- Added a transaction button in the dashboard page that redirects to the transaction page and automatically opens the form.
+
 ## [1.1.1] - 2026-10-28
 
 ### Added
