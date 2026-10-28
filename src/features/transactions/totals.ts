@@ -42,6 +42,7 @@ export type TransactionSummary = {
   inCentavos: number;
   outCentavos: number;
   netCentavos: number;
+  totalFeeCentavos: number;
 };
 
 export function transactionEffectCentavos(
@@ -62,12 +63,15 @@ export function summarizeTransactions(
 ): TransactionSummary {
   let inCentavos = 0;
   let outCentavos = 0;
+  let totalFeeCentavos = 0;
 
   for (const transaction of filterTransactionsByRange(transactions, range)) {
     const amount = Math.round(Number(transaction.amount) * 100);
     const feePart = transaction.countFee
       ? Math.round(Number(transaction.fee) * 100)
       : 0;
+
+    totalFeeCentavos += Math.round(Number(transaction.fee) * 100);
 
     if (transaction.type === "cash_in") {
       inCentavos += amount + feePart;
@@ -77,7 +81,12 @@ export function summarizeTransactions(
   }
 
   // Net change to account balances: cash out credits, cash in debits.
-  return { inCentavos, outCentavos, netCentavos: outCentavos - inCentavos };
+  return {
+    inCentavos,
+    outCentavos,
+    netCentavos: outCentavos - inCentavos,
+    totalFeeCentavos,
+  };
 }
 
 export function periodRange(period: Period, now = new Date()): DateRange {

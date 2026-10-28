@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowDownLeft, ArrowUpRight, Plus, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Plus, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { StatCard } from "@/components/dashboard/stat-card";
@@ -32,6 +32,12 @@ import type { TransactionItem } from "@/features/transactions/api";
 import { ConfirmDialog } from "@/components/dashboard/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/transactions")({
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { account?: string; new?: boolean } => ({
+    account: typeof search.account === "string" ? search.account : undefined,
+    new: search.new === true || search.new === "true" ? true : undefined,
+  }),
   component: TransactionsPage,
 });
 
@@ -46,15 +52,39 @@ const FILTER_OPTIONS: TransactionsFilter[] = [
 ];
 
 function TransactionsPage() {
-  const transactionsQuery = useTransactions();
   const accountsQuery = useAccounts();
   const deleteTransaction = useDeleteTransaction();
+
+  // Account Filter
+  const { account: accountParam, new: openNewParam } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const selectedAccountId =
+    accountParam &&
+    accountsQuery.data?.some((account) => account.id === accountParam)
+      ? accountParam
+      : undefined;
+
+  const transactionsQuery = useTransactions(selectedAccountId);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionItem | null>(null);
   const [filter, setFilter] = useState<TransactionsFilter>("All Time");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+
+  // Deep link from the dashboard: /transactions?new=true keeps the dialog
+  // open while the param is present; closing strips it so refresh won't
+  // reopen the form.
+  function closeDialog() {
+    setDialogOpen(false);
+    if (openNewParam) {
+      navigate({
+        to: "/transactions",
+        search: (previous) => ({ account: previous.account }),
+        replace: true,
+      });
+    }
+  }
 
   const [toDelete, setToDelete] = useState<TransactionItem | null>(null);
 
@@ -81,9 +111,13 @@ function TransactionsPage() {
   const transactions = transactionsQuery.data ?? [];
   const accounts = (accountsQuery.data ?? []).map((account) => ({
     id: account.id,
-    label: `${account.providerName} · ${account.nickname}`,
+    label: `${account.providerName} · ${account.nickname}${account.isActive ? "" : " · Inactive"}`,
     amount: account.amount,
   }));
+
+  const selectedAccountName = accounts.find(
+    (account) => account.id === selectedAccountId,
+  )?.label;
 
   const range =
     filter === "All Time"
@@ -97,7 +131,7 @@ function TransactionsPage() {
   const summary = summarizeTransactions(filtered);
   const totalIn = formatPeso(summary.inCentavos / 100);
   const totalOut = formatPeso(summary.outCentavos / 100);
-  const net = formatPeso(summary.netCentavos / 100);
+  const totalFee = formatPeso(summary.totalFeeCentavos / 100);
 
   function openCreate() {
     setEditing(null);
@@ -121,6 +155,56 @@ function TransactionsPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1">
+            <Select
+              items={[
+                { value: "all", label: "All accounts" },
+                ...accounts.map((account) => ({
+                  value: account.id,
+                  label: account.label,
+                })),
+              ]}
+              value={selectedAccountId ?? "all"}
+              onValueChange={(value) =>
+                navigate({
+                  to: "/transactions",
+                  search: {
+                    account: !value || value === "all" ? undefined : value,
+                  },
+                })
+              }
+            >
+              <SelectTrigger
+                aria-label="Filter by account"
+                className="h-10 w-44 rounded-xl"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All accounts</SelectItem>
+                {accounts.map((account) => (
+                  <SelectItem key={account.id} value={account.id}>
+                    {account.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedAccountId && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Clear account filter"
+                onClick={() =>
+                  navigate({
+                    to: "/transactions",
+                    search: { account: undefined },
+                  })
+                }
+              >
+                <X />
+              </Button>
+            )}
+          </div>
           <Select
             value={filter}
             onValueChange={(value) => setFilter(value as TransactionsFilter)}
@@ -190,9 +274,9 @@ function TransactionsPage() {
         />
         <StatCard
           variant="filled"
-          title="Net Cash Flow"
-          subtitle={`Cash out minus cash in · ${filter}`}
-          amount={net}
+          title="Total Income"
+          subtitle={`Cash out and cash in · ${filter} from ${selectedAccountId ? selectedAccountName : "all accounts"}`}
+          amount={totalFee}
           footerLabel="View transactions"
           icon={Wallet}
         />
@@ -206,14 +290,16 @@ function TransactionsPage() {
         </p>
       ) : (
         <TransactionsTable
-          key={`${filter}-${fromDate}-${toDate}`}
+          key={`${filter}-${fromDate}-${toDate}-${selectedAccountId ?? "all"}`}
           transactions={filtered}
           onEdit={openEdit}
           onDelete={handleDelete}
           emptyMessage={
-            isFiltering
-              ? "No transactions in this range."
-              : "No transactions yet."
+            selectedAccountId
+              ? "No transactions for this account."
+              : isFiltering
+                ? "No transactions in this range."
+                : "No transactions yet."
           }
         />
       )}
@@ -240,11 +326,13 @@ function TransactionsPage() {
       />
 
       <TransactionFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        open={dialogOpen || openNewParam === true}
+        onOpenChange={(open) => {
+          if (!open) closeDialog();
+        }}
         accounts={accounts}
         transaction={editing ?? undefined}
-        onSaved={() => setDialogOpen(false)}
+        onSaved={closeDialog}
       />
     </div>
   );

@@ -44,9 +44,10 @@ describe("summarizeTransactions", () => {
     expect(summary.outCentavos).toBe(5500);
     // Net is the balance movement: cash out minus cash in.
     expect(summary.netCentavos).toBe(-4500);
+    expect(summary.totalFeeCentavos).toBe(500);
   });
 
-  it("ignores fees that are not counted", () => {
+  it("excludes uncounted fees from in/out/net but counts them in the total fee", () => {
     const summary = summarizeTransactions([
       tx("1", "cash_in", "5000", "10", "2026-10-01T10:00", false),
       tx("2", "cash_out", "2000", "10", "2026-10-02T10:00", false),
@@ -54,6 +55,9 @@ describe("summarizeTransactions", () => {
 
     expect(summary.inCentavos).toBe(500000);
     expect(summary.outCentavos).toBe(200000);
+    expect(summary.netCentavos).toBe(-300000);
+    // All fees land in the fee total, ticked or not.
+    expect(summary.totalFeeCentavos).toBe(2000);
   });
 
   it("includes counted cash in fees in the cash in total", () => {
@@ -62,6 +66,7 @@ describe("summarizeTransactions", () => {
     ]);
 
     expect(summary.inCentavos).toBe(501000);
+    expect(summary.totalFeeCentavos).toBe(1000);
   });
 
   it("keeps only transactions inside the range", () => {
@@ -82,6 +87,7 @@ describe("summarizeTransactions", () => {
     expect(summary.inCentavos).toBe(0);
     expect(summary.outCentavos).toBe(0);
     expect(summary.netCentavos).toBe(0);
+    expect(summary.totalFeeCentavos).toBe(0);
   });
 });
 

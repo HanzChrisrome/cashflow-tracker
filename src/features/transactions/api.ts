@@ -163,13 +163,29 @@ type TransactionRow = {
   note?: string;
 };
 
-export async function listTransactions(): Promise<TransactionItem[]> {
-  const { data, error } = await supabase
-    .from("transactions")
-    .select(
-      "id, account_id, type, amount::text, fee::text, count_fee, occurred_at, accounts(nickname, providers(name)), note",
+export async function listTransactions(
+  accountId?: string,
+): Promise<TransactionItem[]> {
+  let query = supabase.from("transactions").select(`
+    id,
+    account_id,
+    type,
+    amount::text,
+    fee::text,
+    count_fee,
+    occurred_at,
+    note,
+    accounts (
+      nickname,
+      providers (name)
     )
-    .order("occurred_at", { ascending: false });
+  `);
+  if (accountId) {
+    query = query.eq("account_id", accountId);
+  }
+  const { data, error } = await query.order("occurred_at", {
+    ascending: false,
+  });
 
   if (error) throw error;
   if (!data) return [];
