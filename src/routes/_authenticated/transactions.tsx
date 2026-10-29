@@ -23,7 +23,6 @@ import {
 } from "@/features/transactions/hooks";
 import {
   customDateRange,
-  filterTransactionsByRange,
   periodRange,
   summarizeTransactions,
   type Period,
@@ -44,16 +43,23 @@ export const Route = createFileRoute("/_authenticated/transactions")({
 type TransactionsFilter = Period | "All Time" | "Custom Range";
 
 const FILTER_OPTIONS: TransactionsFilter[] = [
-  "All Time",
+  "Today",
   "This Month",
   "Last Month",
   "This Year",
+  "All Time",
   "Custom Range",
 ];
 
 function TransactionsPage() {
   const accountsQuery = useAccounts();
   const deleteTransaction = useDeleteTransaction();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<TransactionItem | null>(null);
+  const [filter, setFilter] = useState<TransactionsFilter>("Today");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   // Account Filter
   const { account: accountParam, new: openNewParam } = Route.useSearch();
@@ -64,13 +70,19 @@ function TransactionsPage() {
       ? accountParam
       : undefined;
 
-  const transactionsQuery = useTransactions(selectedAccountId);
+  // Date Filter
+  const range =
+    filter === "All Time"
+      ? undefined
+      : filter === "Custom Range"
+        ? customDateRange(fromDate, toDate)
+        : periodRange(filter);
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<TransactionItem | null>(null);
-  const [filter, setFilter] = useState<TransactionsFilter>("All Time");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const transactionsQuery = useTransactions({
+    accountId: selectedAccountId,
+    from: range?.start,
+    to: range?.end,
+  });
 
   // Deep link from the dashboard: /transactions?new=true keeps the dialog
   // open while the param is present; closing strips it so refresh won't
@@ -119,19 +131,18 @@ function TransactionsPage() {
     (account) => account.id === selectedAccountId,
   )?.label;
 
-  const range =
-    filter === "All Time"
-      ? undefined
-      : filter === "Custom Range"
-        ? customDateRange(fromDate, toDate)
-        : periodRange(filter);
-
-  const filtered = filterTransactionsByRange(transactions, range);
-  const isFiltering = filtered.length !== transactions.length;
-  const summary = summarizeTransactions(filtered);
+  const summary = summarizeTransactions(transactions);
   const totalIn = formatPeso(summary.inCentavos / 100);
   const totalOut = formatPeso(summary.outCentavos / 100);
   const totalFee = formatPeso(summary.totalFeeCentavos / 100);
+  const isDateFiltered = filter !== "All Time" && filter !== "Custom Range";
+  const emptyMessage = selectedAccountId
+    ? "No transactions for this account."
+    : filter === "Today"
+      ? "No transactions yet today."
+      : isDateFiltered
+        ? "No transactions in this range."
+        : "No transactions yet.";
 
   function openCreate() {
     setEditing(null);
@@ -291,16 +302,10 @@ function TransactionsPage() {
       ) : (
         <TransactionsTable
           key={`${filter}-${fromDate}-${toDate}-${selectedAccountId ?? "all"}`}
-          transactions={filtered}
+          transactions={transactions}
           onEdit={openEdit}
           onDelete={handleDelete}
-          emptyMessage={
-            selectedAccountId
-              ? "No transactions for this account."
-              : isFiltering
-                ? "No transactions in this range."
-                : "No transactions yet."
-          }
+          emptyMessage={emptyMessage}
         />
       )}
 

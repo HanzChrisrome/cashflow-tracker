@@ -92,6 +92,12 @@ describe("summarizeTransactions", () => {
 });
 
 describe("periodRange", () => {
+  it("returns midnight-to-midnight boundaries for Today", () => {
+    const range = periodRange("Today", NOW);
+    expect(range.start).toEqual(new Date(2026, 9, 26));
+    expect(range.end).toEqual(new Date(2026, 9, 27));
+  });
+
   it("returns calendar month boundaries for This Month", () => {
     const range = periodRange("This Month", NOW);
     expect(range.start.getFullYear()).toBe(2026);
@@ -115,6 +121,12 @@ describe("periodRange", () => {
 });
 
 describe("previousPeriodRange", () => {
+  it("returns yesterday for Today's previous range", () => {
+    const range = previousPeriodRange("Today", NOW);
+    expect(range.start).toEqual(new Date(2026, 9, 25));
+    expect(range.end).toEqual(new Date(2026, 9, 26));
+  });
+
   it("returns the month before This Month", () => {
     const range = previousPeriodRange("This Month", NOW);
     expect(range.start.getMonth()).toBe(8);

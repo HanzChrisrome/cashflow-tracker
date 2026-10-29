@@ -163,9 +163,15 @@ type TransactionRow = {
   note?: string;
 };
 
-export async function listTransactions(
-  accountId?: string,
-): Promise<TransactionItem[]> {
+export async function listTransactions({
+  accountId,
+  from,
+  to,
+}: {
+  accountId?: string;
+  from?: Date;
+  to?: Date;
+} = {}): Promise<TransactionItem[]> {
   let query = supabase.from("transactions").select(`
     id,
     account_id,
@@ -183,6 +189,13 @@ export async function listTransactions(
   if (accountId) {
     query = query.eq("account_id", accountId);
   }
+  if (from) {
+    query = query.gte("occurred_at", from.toISOString());
+  }
+  if (to) {
+    query = query.lte("occurred_at", to.toISOString());
+  }
+
   const { data, error } = await query.order("occurred_at", {
     ascending: false,
   });
