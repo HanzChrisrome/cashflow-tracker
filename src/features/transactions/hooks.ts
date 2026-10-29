@@ -13,12 +13,22 @@ import {
 } from "./api";
 import type { TransactionFormValues } from "./schema";
 
-export function useTransactions(accountId?: string) {
+export function useTransactions({
+  accountId,
+  from,
+  to,
+}: {
+  accountId?: string;
+  from?: Date;
+  to?: Date;
+} = {}) {
   return useQuery({
     queryKey: queryKeys.transactions.list({
       accountId: accountId ?? undefined,
+      from: from?.toISOString(),
+      to: to?.toISOString(),
     }),
-    queryFn: () => listTransactions(accountId),
+    queryFn: () => listTransactions({ accountId, from, to }),
     placeholderData: keepPreviousData,
   });
 }

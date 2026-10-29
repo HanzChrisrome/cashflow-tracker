@@ -14,6 +14,8 @@ import { listAccounts } from "@/features/accounts/api";
 import { listTransactions } from "@/features/transactions/api";
 import type { TransactionItem } from "@/features/transactions/api";
 
+import { nowLocalInput } from "@/features/transactions/schema";
+
 vi.mock("@/lib/supabase", () => ({
   supabase: {
     auth: {
@@ -78,7 +80,15 @@ function tx(id: string, accountId: string, amount: string): TransactionItem {
     amount,
     fee: "0",
     countFee: false,
-    timestamp: "2026-10-20T10:00",
+    timestamp: nowLocalInput(),
+  };
+}
+
+function todayBounds() {
+  const now = new Date();
+  return {
+    from: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    to: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1),
   };
 }
 
@@ -108,21 +118,31 @@ beforeEach(() => {
 });
 
 describe("Transactions page account filter", () => {
-  it("shows all accounts by default and queries unfiltered", async () => {
+  it("defaults to Today and queries with today's bounds", async () => {
     listTransactionsMock.mockResolvedValue([tx("t1", "acc-1", "100")]);
 
     renderPage();
 
     expect(await screen.findByText("+₱100.00")).toBeInTheDocument();
-    expect(listTransactionsMock).toHaveBeenCalledWith(undefined);
+    await waitFor(() =>
+      expect(listTransactionsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining(todayBounds()),
+      ),
+    );
+    expect(screen.getByLabelText("Filter by period")).toHaveTextContent(
+      "Today",
+    );
     expect(screen.getByLabelText("Filter by account")).toHaveTextContent(
       "All accounts",
     );
   });
 
   it("filters by the selected account and keeps it in the URL", async () => {
-    listTransactionsMock.mockImplementation(async (accountId?: string) =>
-      accountId === "acc-1" ? [tx("t1", "acc-1", "100")] : [],
+    listTransactionsMock.mockImplementation(
+      async ({
+        accountId,
+      }: { accountId?: string; from?: Date; to?: Date } = {}) =>
+        accountId === "acc-1" ? [tx("t1", "acc-1", "100")] : [],
     );
 
     const user = userEvent.setup();
@@ -133,14 +153,19 @@ describe("Transactions page account filter", () => {
 
     expect(await screen.findByText("+₱100.00")).toBeInTheDocument();
     await waitFor(() =>
-      expect(listTransactionsMock).toHaveBeenCalledWith("acc-1"),
+      expect(listTransactionsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({ accountId: "acc-1" }),
+      ),
     );
     expect(router.state.location.search).toMatchObject({ account: "acc-1" });
   });
 
   it("clears the filter with the clear button", async () => {
-    listTransactionsMock.mockImplementation(async (accountId?: string) =>
-      accountId ? [] : [tx("t1", "acc-1", "100")],
+    listTransactionsMock.mockImplementation(
+      async ({
+        accountId,
+      }: { accountId?: string; from?: Date; to?: Date } = {}) =>
+        accountId ? [] : [tx("t1", "acc-1", "100")],
     );
 
     const user = userEvent.setup();
@@ -150,14 +175,19 @@ describe("Transactions page account filter", () => {
 
     expect(await screen.findByText("+₱100.00")).toBeInTheDocument();
     await waitFor(() =>
-      expect(listTransactionsMock).toHaveBeenLastCalledWith(undefined),
+      expect(listTransactionsMock).toHaveBeenLastCalledWith(
+        expect.objectContaining(todayBounds()),
+      ),
     );
     expect(router.state.location.search).not.toHaveProperty("account");
   });
 
   it("shows a friendly empty state for an account with no transactions", async () => {
-    listTransactionsMock.mockImplementation(async (accountId?: string) =>
-      accountId ? [] : [tx("t1", "acc-1", "100")],
+    listTransactionsMock.mockImplementation(
+      async ({
+        accountId,
+      }: { accountId?: string; from?: Date; to?: Date } = {}) =>
+        accountId ? [] : [tx("t1", "acc-1", "100")],
     );
 
     const user = userEvent.setup();
@@ -174,13 +204,24 @@ describe("Transactions page account filter", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows a friendly empty state for today with no transactions", async () => {
+    listTransactionsMock.mockResolvedValue([]);
+    renderPage();
+
+    expect(
+      await screen.findByText("No transactions yet today."),
+    ).toBeInTheDocument();
+  });
+
   it("falls back to all accounts for an invalid id in the URL", async () => {
     listTransactionsMock.mockResolvedValue([tx("t1", "acc-1", "100")]);
 
     renderPage("/transactions?account=bogus");
 
     expect(await screen.findByText("+₱100.00")).toBeInTheDocument();
-    expect(listTransactionsMock).toHaveBeenCalledWith(undefined);
+    expect(listTransactionsMock).toHaveBeenCalledWith(
+      expect.objectContaining(todayBounds()),
+    );
     expect(screen.getByLabelText("Filter by account")).toHaveTextContent(
       "All accounts",
     );

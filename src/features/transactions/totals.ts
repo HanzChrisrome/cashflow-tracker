@@ -1,7 +1,7 @@
 import type { TransactionItem } from "./api";
 import type { TransactionType } from "./schema";
 
-export type Period = "This Month" | "Last Month" | "This Year";
+export type Period = "Today" | "This Month" | "Last Month" | "This Year";
 
 export type DateRange = { start: Date; end: Date };
 
@@ -90,6 +90,13 @@ export function summarizeTransactions(
 }
 
 export function periodRange(period: Period, now = new Date()): DateRange {
+  if (period === "Today") {
+    return {
+      start: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+      end: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1),
+    };
+  }
+
   if (period === "This Year") {
     return {
       start: new Date(now.getFullYear(), 0, 1),
@@ -108,6 +115,13 @@ export function previousPeriodRange(
   period: Period,
   now = new Date(),
 ): DateRange {
+  if (period === "Today") {
+    return {
+      start: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1),
+      end: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    };
+  }
+
   if (period === "This Year") {
     return {
       start: new Date(now.getFullYear() - 1, 0, 1),
