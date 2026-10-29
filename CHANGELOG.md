@@ -6,6 +6,13 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-10-30
+
+### Added
+
+- Added a today date filter in the transaction page for ease of filtering
+- Adjusted the filtering of date to be in a query level instead of just hiding the rows.
+
 ## [1.2.1] - 2026-10-28
 
 ### Added
