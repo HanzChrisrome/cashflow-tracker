@@ -41,7 +41,10 @@ export type TransactionFormAccount = {
   amount: string;
 };
 
-export type TransactionFormTransaction = { id: string } & TransactionFormValues;
+export type TransactionFormTransaction = {
+  id: string;
+  releasedAt?: string;
+} & TransactionFormValues;
 
 const typeLabels: Record<TransactionType, string> = {
   cash_in: "Cash In",
@@ -130,6 +133,7 @@ export function TransactionForm({
           timestamp: transaction.timestamp,
           countFee: transaction.countFee,
           note: transaction.note,
+          onHold: transaction.onHold,
         }
       : {
           type: "cash_in",
@@ -139,6 +143,7 @@ export function TransactionForm({
           timestamp: nowLocalInput(),
           countFee: false,
           note: "",
+          onHold: false,
         },
   });
 
@@ -222,7 +227,10 @@ export function TransactionForm({
               <FormControl>
                 <TypeToggle
                   value={field.value}
-                  onChange={(type) => field.onChange(type)}
+                  onChange={(type) => {
+                    field.onChange(type);
+                    if (type === "cash_in") form.setValue("onHold", false);
+                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -366,10 +374,6 @@ export function TransactionForm({
                   <FormLabel className="text-base">
                     Count fee toward balance
                   </FormLabel>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    Cash out credits the amount plus the fee; cash in deducts
-                    it.
-                  </p>
                 </div>
                 <FormControl>
                   <Checkbox
@@ -382,6 +386,32 @@ export function TransactionForm({
             </FormItem>
           )}
         />
+
+        {watchedType === "cash_out" && (
+          <FormField
+            control={form.control}
+            name="onHold"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-border px-4 py-2">
+                  <div className="min-w-0">
+                    <FormLabel className="text-base text-red-700">
+                      Hold this cash out
+                    </FormLabel>
+                  </div>
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      disabled={Boolean(transaction?.releasedAt)}
+                    />
+                  </FormControl>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}

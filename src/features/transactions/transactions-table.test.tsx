@@ -13,6 +13,8 @@ const transactions: TransactionItem[] = [
     amount: "5000",
     fee: "0",
     countFee: false,
+    onHold: false,
+    releasedAt: "2026-10-26T12:00",
     timestamp: "2026-10-26T10:32",
   },
   {
@@ -23,6 +25,7 @@ const transactions: TransactionItem[] = [
     amount: "2350",
     fee: "15",
     countFee: true,
+    onHold: true,
     timestamp: "2026-10-25T16:05",
     note: "Customer reference #123",
   },
@@ -34,6 +37,7 @@ const transactions: TransactionItem[] = [
     amount: "1200",
     fee: "0",
     countFee: false,
+    onHold: false,
     timestamp: "2026-10-24T09:02",
   },
 ];
@@ -44,6 +48,7 @@ describe("TransactionsTable", () => {
       <TransactionsTable
         transactions={transactions}
         onEdit={vi.fn()}
+        onRelease={vi.fn()}
         onDelete={vi.fn()}
       />,
     );
@@ -55,7 +60,42 @@ describe("TransactionsTable", () => {
     expect(screen.getByText("-₱5,000.00")).toBeInTheDocument();
     expect(screen.getByText("+₱2,350.00")).toBeInTheDocument();
     expect(screen.getByText("₱15.00")).toBeInTheDocument();
-    expect(screen.getByText(/Oct 26, 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/Oct 26, 2026, 10:32/)).toBeInTheDocument();
+  });
+
+  it("badges held rows and shows the release time for released ones", () => {
+    render(
+      <TransactionsTable
+        transactions={transactions}
+        onEdit={vi.fn()}
+        onRelease={vi.fn()}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("On hold")).toBeInTheDocument();
+    expect(screen.getByText(/Released at Oct 26, 2026/)).toBeInTheDocument();
+  });
+
+  it("calls onRelease for a held transaction's Release button", async () => {
+    const user = userEvent.setup();
+    const onRelease = vi.fn();
+    render(
+      <TransactionsTable
+        transactions={transactions}
+        onEdit={vi.fn()}
+        onRelease={onRelease}
+        onDelete={vi.fn()}
+      />,
+    );
+
+    const releaseButtons = screen.getAllByRole("button", {
+      name: "Release transaction",
+    });
+    expect(releaseButtons).toHaveLength(1);
+
+    await user.click(releaseButtons[0]);
+    expect(onRelease).toHaveBeenCalledWith(transactions[1]);
   });
 
   it("marks counted fees in the fee column", () => {
@@ -63,6 +103,7 @@ describe("TransactionsTable", () => {
       <TransactionsTable
         transactions={transactions}
         onEdit={vi.fn()}
+        onRelease={vi.fn()}
         onDelete={vi.fn()}
       />,
     );
@@ -77,6 +118,7 @@ describe("TransactionsTable", () => {
       <TransactionsTable
         transactions={transactions}
         onEdit={vi.fn()}
+        onRelease={vi.fn()}
         onDelete={vi.fn()}
       />,
     );
@@ -91,6 +133,7 @@ describe("TransactionsTable", () => {
       <TransactionsTable
         transactions={transactions}
         onEdit={vi.fn()}
+        onRelease={vi.fn()}
         onDelete={vi.fn()}
       />,
     );
@@ -111,6 +154,7 @@ describe("TransactionsTable", () => {
       <TransactionsTable
         transactions={many}
         onEdit={vi.fn()}
+        onRelease={vi.fn()}
         onDelete={vi.fn()}
       />,
     );
@@ -141,6 +185,7 @@ describe("TransactionsTable", () => {
       <TransactionsTable
         transactions={transactions}
         onEdit={onEdit}
+        onRelease={vi.fn()}
         onDelete={vi.fn()}
       />,
     );
@@ -159,6 +204,7 @@ describe("TransactionsTable", () => {
       <TransactionsTable
         transactions={transactions}
         onEdit={vi.fn()}
+        onRelease={vi.fn()}
         onDelete={onDelete}
       />,
     );
@@ -175,6 +221,7 @@ describe("TransactionsTable", () => {
       <TransactionsTable
         transactions={[]}
         onEdit={vi.fn()}
+        onRelease={vi.fn()}
         onDelete={vi.fn()}
       />,
     );
@@ -187,6 +234,7 @@ describe("TransactionsTable", () => {
       <TransactionsTable
         transactions={[]}
         onEdit={vi.fn()}
+        onRelease={vi.fn()}
         onDelete={vi.fn()}
         emptyMessage="No transactions in this range."
       />,

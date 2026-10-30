@@ -36,6 +36,7 @@ const existing: TransactionFormTransaction = {
   amount: "2350",
   fee: "15",
   countFee: true,
+  onHold: false,
   timestamp: "2026-10-25T16:05",
 };
 
@@ -129,6 +130,7 @@ describe("TransactionForm validation", () => {
       amount: "100",
       fee: "0",
       countFee: false,
+      onHold: false,
       timestamp: "2026-10-26T10:00",
     };
 
@@ -149,6 +151,7 @@ describe("TransactionForm validation", () => {
       accountId: "a1",
       fee: "0",
       countFee: true,
+      onHold: false,
       timestamp: "2026-10-26T10:00",
     };
 
@@ -188,6 +191,7 @@ describe("TransactionForm validation", () => {
         amount: "2350",
         fee: "15",
         countFee: true,
+        onHold: false,
       },
     });
 
@@ -198,6 +202,7 @@ describe("TransactionForm validation", () => {
       amount: "2865.01",
       fee: "0",
       countFee: false,
+      onHold: false,
       timestamp: "2026-10-26T10:00",
     });
     expect(blocked.success).toBe(false);
@@ -214,6 +219,7 @@ describe("TransactionForm validation", () => {
         amount: "2865",
         fee: "0",
         countFee: false,
+        onHold: false,
         timestamp: "2026-10-26T10:00",
       }).success,
     ).toBe(true);
@@ -381,6 +387,7 @@ describe("TransactionForm success", () => {
       amount: "1500.50",
       fee: "0",
       countFee: false,
+      onHold: false,
       note: "Customer reference #123",
       timestamp: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
     });
@@ -444,6 +451,7 @@ describe("TransactionForm success", () => {
       amount: "3000",
       fee: "15",
       countFee: true,
+      onHold: false,
       timestamp: "2026-10-25T16:05",
     });
     expect(toastMock.success).toHaveBeenCalledWith("Transaction updated");
@@ -464,5 +472,101 @@ describe("TransactionForm success", () => {
       "Could not save the transaction",
     );
     expect(onSaved).not.toHaveBeenCalled();
+  });
+});
+
+describe("TransactionForm hold", () => {
+  it("shows the hold checkbox only for cash out", async () => {
+    const user = userEvent.setup();
+    renderForm(<TransactionForm accounts={accounts} onSaved={vi.fn()} />);
+
+    expect(
+      screen.queryByLabelText(/Hold this cash out/),
+    ).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Cash Out" }));
+
+    expect(
+      await screen.findByRole("checkbox", { name: /Hold this cash out/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("clears the hold when switching back to cash in", async () => {
+    createTransactionMock.mockResolvedValue({ id: "new-tx" } as never);
+    const onSaved = vi.fn();
+    const user = userEvent.setup();
+    renderForm(<TransactionForm accounts={accounts} onSaved={onSaved} />);
+
+    await user.click(screen.getByRole("button", { name: "Cash Out" }));
+    await user.click(
+      screen.getByRole("checkbox", { name: /Hold this cash out/ }),
+    );
+    await user.click(screen.getByRole("button", { name: "Cash In" }));
+    await selectAccount(user, "GCash · Main");
+    await user.type(screen.getByLabelText("Amount"), "100");
+    await user.click(screen.getByRole("button", { name: "Save transaction" }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(createTransactionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "cash_in", onHold: false }),
+    );
+  });
+
+  it("submits a held cash out", async () => {
+    createTransactionMock.mockResolvedValue({ id: "new-tx" } as never);
+    const onSaved = vi.fn();
+    const user = userEvent.setup();
+    renderForm(<TransactionForm accounts={accounts} onSaved={onSaved} />);
+
+    await user.click(screen.getByRole("button", { name: "Cash Out" }));
+    await user.click(
+      screen.getByRole("checkbox", { name: /Hold this cash out/ }),
+    );
+    await selectAccount(user, "Maya · Store");
+    await user.type(screen.getByLabelText("Amount"), "300");
+    await user.click(screen.getByRole("button", { name: "Save transaction" }));
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(createTransactionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "cash_out", onHold: true }),
+    );
+  });
+
+  it("disables the hold checkbox for a released transaction", async () => {
+    renderForm(
+      <TransactionForm
+        accounts={accounts}
+        transaction={{
+          ...existing,
+          type: "cash_out",
+          onHold: false,
+          releasedAt: "2026-10-26T12:00",
+        }}
+        onSaved={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("checkbox", { name: /Hold this cash out/ }),
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("blocks holds on cash ins at the schema level", () => {
+    const schema = createTransactionSchema();
+    const blocked = schema.safeParse({
+      type: "cash_in",
+      accountId: "a1",
+      amount: "100",
+      fee: "0",
+      countFee: false,
+      onHold: true,
+      timestamp: "2026-10-26T10:00",
+    });
+    expect(blocked.success).toBe(false);
+    if (!blocked.success) {
+      expect(blocked.error.issues[0].message).toBe(
+        "Only cash out transactions can be held",
+      );
+    }
   });
 });

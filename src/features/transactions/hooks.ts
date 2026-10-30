@@ -9,6 +9,7 @@ import {
   createTransaction,
   deleteTransaction,
   listTransactions,
+  releaseTransaction,
   updateTransaction,
 } from "./api";
 import type { TransactionFormValues } from "./schema";
@@ -56,6 +57,17 @@ export function useDeleteTransaction() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all });
+    },
+  });
+}
+
+export function useReleaseTransaction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => releaseTransaction(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all });
     },
   });
 }

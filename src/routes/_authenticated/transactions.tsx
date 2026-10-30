@@ -18,6 +18,7 @@ import { useAccounts } from "@/features/accounts/hooks";
 import { TransactionFormDialog } from "@/features/transactions/TransactionFormDialog";
 import { TransactionsTable } from "@/features/transactions/transactions-table";
 import {
+  useReleaseTransaction,
   useDeleteTransaction,
   useTransactions,
 } from "@/features/transactions/hooks";
@@ -27,7 +28,7 @@ import {
   summarizeTransactions,
   type Period,
 } from "@/features/transactions/totals";
-import type { TransactionItem } from "@/features/transactions/api";
+import { type TransactionItem } from "@/features/transactions/api";
 import { ConfirmDialog } from "@/components/dashboard/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/transactions")({
@@ -53,9 +54,11 @@ const FILTER_OPTIONS: TransactionsFilter[] = [
 
 function TransactionsPage() {
   const accountsQuery = useAccounts();
+  const releaseTransaction = useReleaseTransaction();
   const deleteTransaction = useDeleteTransaction();
 
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [releaseDialogOpen, setReleaseDialogOpen] = useState(false);
   const [editing, setEditing] = useState<TransactionItem | null>(null);
   const [filter, setFilter] = useState<TransactionsFilter>("Today");
   const [fromDate, setFromDate] = useState("");
@@ -120,6 +123,19 @@ function TransactionsPage() {
     }
   }
 
+  async function handleRelease(transaction: TransactionItem) {
+    try {
+      await releaseTransaction.mutateAsync(transaction.id);
+      toast.success("Transaction released.");
+    } catch (error) {
+      toast.error(
+        `Could not release transaction: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
   const transactions = transactionsQuery.data ?? [];
   const accounts = (accountsQuery.data ?? []).map((account) => ({
     id: account.id,
@@ -152,6 +168,11 @@ function TransactionsPage() {
   function openEdit(transaction: TransactionItem) {
     setEditing(transaction);
     setDialogOpen(true);
+  }
+
+  function openRelease(transaction: TransactionItem) {
+    setEditing(transaction);
+    setReleaseDialogOpen(true);
   }
 
   return (
@@ -304,6 +325,7 @@ function TransactionsPage() {
           key={`${filter}-${fromDate}-${toDate}-${selectedAccountId ?? "all"}`}
           transactions={transactions}
           onEdit={openEdit}
+          onRelease={openRelease}
           onDelete={handleDelete}
           emptyMessage={emptyMessage}
         />
@@ -328,6 +350,30 @@ function TransactionsPage() {
         confirmLabel="Delete"
         cancelLabel="Cancel"
         onConfirm={confirmDelete}
+      />
+
+      <ConfirmDialog
+        open={releaseDialogOpen}
+        onOpenChange={() => setReleaseDialogOpen(false)}
+        title="Release transaction?"
+        description={
+          editing && (
+            <>
+              This will release the{" "}
+              {editing.type === "cash_in" ? "cash in" : "cash out"} of{" "}
+              <span className="font-medium text-foreground">
+                {formatPeso(editing.amount)}
+              </span>{" "}
+              on {editing.accountLabel}. This can't be undone.
+            </>
+          )
+        }
+        confirmLabel="Release"
+        cancelLabel="Cancel"
+        onConfirm={() => {
+          if (!editing) return;
+          handleRelease(editing);
+        }}
       />
 
       <TransactionFormDialog

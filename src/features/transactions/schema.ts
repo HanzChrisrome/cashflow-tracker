@@ -22,6 +22,7 @@ export type OriginalTransactionRef = {
   amount: string;
   fee: string;
   countFee: boolean;
+  onHold: boolean;
 };
 
 export type TransactionSchemaContext = {
@@ -112,8 +113,17 @@ export function createTransactionSchema({
           "Enter a valid date and time",
         ),
       note: z.string().trim().optional(),
+      onHold: z.boolean(),
     })
     .superRefine((values, ctx) => {
+      if (values.onHold && values.type === "cash_in") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["onHold"],
+          message: "Only cash out transactions can be held",
+        });
+      }
+
       // Cash in debits the account, so only it can overdraw the balance.
       if (values.type === "cash_out") return;
 

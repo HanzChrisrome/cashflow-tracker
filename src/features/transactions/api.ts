@@ -16,6 +16,8 @@ export type TransactionItem = {
   countFee: boolean;
   note?: string;
   timestamp: string;
+  onHold: boolean;
+  releasedAt?: string;
 };
 
 type StoredTransaction = {
@@ -25,6 +27,8 @@ type StoredTransaction = {
   fee: string;
   count_fee: boolean;
   note?: string;
+  on_hold: boolean;
+  released_at: string | null;
 };
 
 function toRow(values: TransactionFormValues) {
@@ -36,6 +40,7 @@ function toRow(values: TransactionFormValues) {
     count_fee: values.countFee,
     occurred_at: new Date(values.timestamp).toISOString(),
     note: values.note || null,
+    on_hold: values.onHold,
   };
 }
 
@@ -148,6 +153,18 @@ export async function deleteTransaction(id: string) {
   );
 }
 
+export async function releaseTransaction(id: string) {
+  const { data, error } = await supabase
+    .from("transactions")
+    .update({ on_hold: false, released_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 type TransactionRow = {
   id: string;
   account_id: string;
@@ -161,6 +178,8 @@ type TransactionRow = {
     providers: { name: string } | null;
   } | null;
   note?: string;
+  on_hold: boolean;
+  released_at: string | null;
 };
 
 export async function listTransactions({
@@ -181,6 +200,8 @@ export async function listTransactions({
     count_fee,
     occurred_at,
     note,
+    on_hold,
+    released_at,
     accounts (
       nickname,
       providers (name)
@@ -216,5 +237,9 @@ export async function listTransactions({
     countFee: row.count_fee,
     timestamp: nowLocalInput(new Date(row.occurred_at)),
     note: row.note || undefined,
+    onHold: row.on_hold,
+    releasedAt: row.released_at
+      ? nowLocalInput(new Date(row.released_at))
+      : undefined,
   }));
 }
