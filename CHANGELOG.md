@@ -6,6 +6,13 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-10-31
+
+### Added
+
+- Added a on hold checkbox in the transaction forms
+- Marked the row with a subtle red color in the transaction table when the transaction is on hold.
+
 ## [1.2.2] - 2026-10-30
 
 ### Added

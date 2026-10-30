@@ -29,6 +29,7 @@ function tx(
     amount,
     fee,
     countFee,
+    onHold: false,
     timestamp,
   };
 }

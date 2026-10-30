@@ -21,6 +21,7 @@ const transactions: TransactionItem[] = [
     amount: "5000",
     fee: "0",
     countFee: false,
+    onHold: false,
     timestamp: "2026-10-26T10:32",
   },
   {
@@ -31,6 +32,7 @@ const transactions: TransactionItem[] = [
     amount: "2350",
     fee: "15",
     countFee: true,
+    onHold: false,
     timestamp: "2026-10-25T16:05",
   },
 ];

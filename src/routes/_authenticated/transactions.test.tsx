@@ -11,7 +11,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { routeTree } from "@/routeTree.gen";
 import { supabase } from "@/lib/supabase";
 import { listAccounts } from "@/features/accounts/api";
-import { listTransactions } from "@/features/transactions/api";
+import {
+  listTransactions,
+  releaseTransaction,
+} from "@/features/transactions/api";
 import type { TransactionItem } from "@/features/transactions/api";
 
 import { nowLocalInput } from "@/features/transactions/schema";
@@ -44,11 +47,13 @@ vi.mock("@/features/transactions/api", () => ({
   createTransaction: vi.fn(),
   updateTransaction: vi.fn(),
   deleteTransaction: vi.fn(),
+  releaseTransaction: vi.fn(),
 }));
 
 const getSession = vi.mocked(supabase.auth.getSession);
 const listAccountsMock = vi.mocked(listAccounts);
 const listTransactionsMock = vi.mocked(listTransactions);
+const releaseTransactionMock = vi.mocked(releaseTransaction);
 
 const accounts = [
   {
@@ -80,6 +85,7 @@ function tx(id: string, accountId: string, amount: string): TransactionItem {
     amount,
     fee: "0",
     countFee: false,
+    onHold: false,
     timestamp: nowLocalInput(),
   };
 }
@@ -225,6 +231,28 @@ describe("Transactions page account filter", () => {
     expect(screen.getByLabelText("Filter by account")).toHaveTextContent(
       "All accounts",
     );
+  });
+
+  it("releases a held transaction through the confirm dialog", async () => {
+    const user = userEvent.setup();
+    releaseTransactionMock.mockResolvedValue({} as never);
+    listTransactionsMock.mockResolvedValue([
+      { ...tx("t1", "acc-1", "100"), onHold: true },
+    ]);
+
+    renderPage();
+
+    await user.click(
+      await screen.findByRole("button", { name: "Release transaction" }),
+    );
+
+    expect(await screen.findByText("Release transaction?")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^Release$/ }));
+
+    await waitFor(() =>
+      expect(releaseTransactionMock).toHaveBeenCalledWith("t1"),
+    );
+    expect(await screen.findByText("+₱100.00")).toBeInTheDocument();
   });
 
   it("opens the add-transaction dialog from the dashboard deep link", async () => {

@@ -37,6 +37,8 @@ export type TransactionItem = {
   countFee: boolean;
   timestamp: string;
   note?: string;
+  onHold: boolean;
+  releasedAt?: string;
 };
 
 export function formatTimestampInput(value: string) {
@@ -54,12 +56,14 @@ export function formatTimestampInput(value: string) {
 export function TransactionsTable({
   transactions,
   onEdit,
+  onRelease,
   onDelete,
   emptyMessage = "No transactions yet.",
 }: {
   transactions: TransactionItem[];
   onEdit: (transaction: TransactionItem) => void;
   onDelete: (transaction: TransactionItem) => void;
+  onRelease: (transaction: TransactionItem) => void;
   emptyMessage?: string;
 }) {
   const PAGE_SIZE = 10;
@@ -121,7 +125,12 @@ export function TransactionsTable({
               </TableHeader>
               <TableBody>
                 {paginatedTransactions.map((transaction) => (
-                  <TableRow key={transaction.id}>
+                  <TableRow
+                    key={transaction.id}
+                    className={cn(
+                      transaction.onHold && "bg-red-50 hover:bg-red-100",
+                    )}
+                  >
                     <TableCell className="pl-5">
                       <div className="flex items-center gap-2.5">
                         <span
@@ -143,6 +152,11 @@ export function TransactionsTable({
                             ? "Cash In"
                             : "Cash Out"}
                         </span>
+                        {transaction.onHold && (
+                          <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700">
+                            On hold
+                          </span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
@@ -197,6 +211,13 @@ export function TransactionsTable({
 
                     <TableCell className="hidden text-muted-foreground md:table-cell">
                       {formatTimestampInput(transaction.timestamp)}
+                      <br />
+                      {transaction.releasedAt && (
+                        <span className="rounded-md bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
+                          Released at{" "}
+                          {formatTimestampInput(transaction.releasedAt)}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell className="pr-5">
                       <div className="flex items-center justify-end gap-1">
@@ -209,6 +230,17 @@ export function TransactionsTable({
                         >
                           Edit
                         </Button>
+                        {transaction.onHold && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="rounded-xl bg-red-600 hover:bg-red-700 text-white"
+                            aria-label="Release transaction"
+                            onClick={() => onRelease(transaction)}
+                          >
+                            Release
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon-sm"
