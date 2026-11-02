@@ -19,4 +19,19 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
-      - run: npm run build
+
+      # PRs: build only, nothing is uploaded to Sentry
+      - name: Build (PR)
+        if: github.event_name == 'pull_request'
+        run: npm run build
+
+      # main: build and upload source maps to Sentry
+      - name: Build and upload source maps (main)
+        if: github.event_name == 'push'
+        run: npm run build
+        env:
+          VITE_APP_ENV: production
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}

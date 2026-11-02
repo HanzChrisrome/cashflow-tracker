@@ -29,6 +29,7 @@ import {
   type Period,
 } from "@/features/transactions/totals";
 import { useAppSettings } from "@/hooks/use-app-settings";
+import * as Sentry from "@sentry/react";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: OverviewPage,
@@ -165,6 +166,17 @@ function OverviewPage() {
           <ChartCard data={chartData} total={chartTotal} />
         </div>
       </div>
+
+      <Button
+        onClick={() =>
+          Sentry.captureException(
+            new Error("Sentry setup test: paying ₱1,500 to juan@example.com"),
+            { extra: { amount: 1500, account_name: "GCash" } },
+          )
+        }
+      >
+        Sentry test
+      </Button>
 
       {transactionsQuery.isPending ? (
         <p className="text-sm text-muted-foreground">Loading transactions…</p>
