@@ -6,6 +6,12 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-10-31
+
+### Added
+
+- Initialized and added sentry for error logging and tracking.
+
 ## [1.3.2] - 2026-10-31
 
 ### Added
