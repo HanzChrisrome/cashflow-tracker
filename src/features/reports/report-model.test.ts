@@ -79,7 +79,7 @@ describe("buildReportModel", () => {
       fromDate: "",
       toDate: "",
       businessName: "Juan's Store",
-      now: NOW,
+      now: new Date("2026-10-29T14:15:00Z"),
     });
 
     expect(model.businessName).toBe("Juan's Store");
