@@ -6,6 +6,16 @@ and this project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-05
+
+### Added
+
+- Added an "Export PDF" button on the transactions page that generates a formal, print-ready A4 report of the filtered transactions, downloadable as a real file on any device.
+- The report shows the business name, the active filters (account and period), the generated date and time in Asia/Manila, and a summary of total cash in, total cash out, total income (fees), and transaction count.
+- Reports include every transaction matching the filters, with repeating table headers on every page, no rows cut across pages, "Page X of Y" footers, and a 2,000-row limit that asks the user to narrow the filters.
+- Totals reuse the same shared calculation as the on-screen stat cards, so the PDF always matches the page.
+- PDFs are generated on-device with lazily loaded libraries (jsPDF + jspdf-autotable) so the main app bundle stays small, with embedded fonts so the peso sign renders correctly.
+
 ## [1.4.2] - 2026-10-31
 
 ### Added
