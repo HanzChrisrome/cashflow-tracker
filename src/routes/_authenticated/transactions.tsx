@@ -26,9 +26,10 @@ import {
   customDateRange,
   periodRange,
   summarizeTransactions,
-  type Period,
 } from "@/features/transactions/totals";
 import { type TransactionItem } from "@/features/transactions/api";
+import type { TransactionsFilter } from "@/features/reports/report-model";
+import { ExportPdfButton } from "@/features/reports/ExportPdfButton";
 import { ConfirmDialog } from "@/components/dashboard/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/transactions")({
@@ -40,8 +41,6 @@ export const Route = createFileRoute("/_authenticated/transactions")({
   }),
   component: TransactionsPage,
 });
-
-type TransactionsFilter = Period | "All Time" | "Custom Range";
 
 const FILTER_OPTIONS: TransactionsFilter[] = [
   "Today",
@@ -255,6 +254,13 @@ function TransactionsPage() {
               ))}
             </SelectContent>
           </Select>
+          <ExportPdfButton
+            transactions={transactions}
+            accountLabel={selectedAccountName ?? "All accounts"}
+            filter={filter}
+            fromDate={fromDate}
+            toDate={toDate}
+          />
           <Button onClick={openCreate} className="h-10 rounded-xl">
             <Plus />
             Add transaction

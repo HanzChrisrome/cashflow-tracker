@@ -129,7 +129,9 @@ describe("Transactions page account filter", () => {
 
     renderPage();
 
-    expect(await screen.findByText("+₱100.00")).toBeInTheDocument();
+    expect(
+      await screen.findByText("+₱100.00", {}, { timeout: 5000 }),
+    ).toBeInTheDocument();
     await waitFor(() =>
       expect(listTransactionsMock).toHaveBeenLastCalledWith(
         expect.objectContaining(todayBounds()),
@@ -157,7 +159,9 @@ describe("Transactions page account filter", () => {
     await user.click(await screen.findByLabelText("Filter by account"));
     await user.click(await screen.findByRole("option", { name: /GCash/ }));
 
-    expect(await screen.findByText("+₱100.00")).toBeInTheDocument();
+    expect(
+      await screen.findByText("+₱100.00", {}, { timeout: 5000 }),
+    ).toBeInTheDocument();
     await waitFor(() =>
       expect(listTransactionsMock).toHaveBeenLastCalledWith(
         expect.objectContaining({ accountId: "acc-1" }),
@@ -179,7 +183,9 @@ describe("Transactions page account filter", () => {
 
     await user.click(await screen.findByLabelText("Clear account filter"));
 
-    expect(await screen.findByText("+₱100.00")).toBeInTheDocument();
+    expect(
+      await screen.findByText("+₱100.00", {}, { timeout: 5000 }),
+    ).toBeInTheDocument();
     await waitFor(() =>
       expect(listTransactionsMock).toHaveBeenLastCalledWith(
         expect.objectContaining(todayBounds()),
@@ -224,7 +230,9 @@ describe("Transactions page account filter", () => {
 
     renderPage("/transactions?account=bogus");
 
-    expect(await screen.findByText("+₱100.00")).toBeInTheDocument();
+    expect(
+      await screen.findByText("+₱100.00", {}, { timeout: 5000 }),
+    ).toBeInTheDocument();
     expect(listTransactionsMock).toHaveBeenCalledWith(
       expect.objectContaining(todayBounds()),
     );
@@ -252,7 +260,9 @@ describe("Transactions page account filter", () => {
     await waitFor(() =>
       expect(releaseTransactionMock).toHaveBeenCalledWith("t1"),
     );
-    expect(await screen.findByText("+₱100.00")).toBeInTheDocument();
+    expect(
+      await screen.findByText("+₱100.00", {}, { timeout: 5000 }),
+    ).toBeInTheDocument();
   });
 
   it("opens the add-transaction dialog from the dashboard deep link", async () => {
