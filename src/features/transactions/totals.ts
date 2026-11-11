@@ -153,7 +153,33 @@ export function percentChangeLabel(
   };
 }
 
-export function monthlyCashIn(
+export function monthlyTotalsByType(
+  transactions: TransactionItem[],
+  type: TransactionType,
+  months = 6,
+  now = new Date(),
+): { month: string; total: number; highlight?: boolean }[] {
+  const buckets: { month: string; total: number; highlight?: boolean }[] = [];
+
+  for (let offset = months - 1; offset >= 0; offset -= 1) {
+    const start = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() - offset + 1, 1);
+    const summary = summarizeTransactions(
+      transactions.filter((transaction) => transaction.type === type),
+      { start, end },
+    );
+    buckets.push({
+      month: start.toLocaleString("en-PH", { month: "short" }),
+      total:
+        (type === "cash_in" ? summary.inCentavos : summary.outCentavos) / 100,
+      highlight: offset === 0,
+    });
+  }
+
+  return buckets;
+}
+
+export function monthlyCashOut(
   transactions: TransactionItem[],
   months = 6,
   now = new Date(),
@@ -164,12 +190,12 @@ export function monthlyCashIn(
     const start = new Date(now.getFullYear(), now.getMonth() - offset, 1);
     const end = new Date(now.getFullYear(), now.getMonth() - offset + 1, 1);
     const summary = summarizeTransactions(
-      transactions.filter((transaction) => transaction.type === "cash_in"),
+      transactions.filter((transaction) => transaction.type === "cash_out"),
       { start, end },
     );
     buckets.push({
       month: start.toLocaleString("en-PH", { month: "short" }),
-      total: summary.inCentavos / 100,
+      total: summary.outCentavos / 100,
       highlight: offset === 0,
     });
   }

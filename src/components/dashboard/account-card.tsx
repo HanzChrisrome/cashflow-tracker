@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { cn } from "cn";
 
 import { formatPeso } from "@/lib/format";
@@ -13,9 +13,11 @@ import {
   Card,
   CardAction,
   CardContent,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useState } from "react";
 
 export type AccountCardData = {
   id: string;
@@ -67,7 +69,10 @@ export function AccountCard({
   const showAlert = status.status === "warning" || status.status === "reached";
 
   return (
-    <div className={cn("rounded-xl border p-3.5", cardStyles[status.status])}>
+    <div
+      data-slot="account-tile"
+      className={cn("rounded-xl border p-3.5", cardStyles[status.status])}
+    >
       <div className="flex items-center gap-2.5">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-tint text-sm font-semibold text-primary">
           {account.providerName.charAt(0)}
@@ -148,6 +153,13 @@ export function AccountsCard({
   accounts: AccountCardData[];
   threshold?: number;
 }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 4;
+  const totalPages = Math.ceil(accounts.length / pageSize);
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedAccounts = accounts.slice(startIndex, startIndex + pageSize);
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -164,9 +176,9 @@ export function AccountsCard({
           </Button>
         </CardAction>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <CardContent className="grid flex-1 content-start grid-cols-1 gap-3 min-h-[24rem] sm:grid-cols-2">
         {accounts.length === 0 ? (
-          <p className="col-span-full py-6 text-center text-sm text-muted-foreground">
+          <p className="col-span-full flex min-h-[22rem] flex-col items-center justify-center gap-1 text-center text-sm text-muted-foreground">
             No accounts yet.{" "}
             <Link
               to="/accounts/new"
@@ -177,7 +189,7 @@ export function AccountsCard({
             .
           </p>
         ) : (
-          accounts.map((account) => (
+          paginatedAccounts.map((account) => (
             <AccountCard
               key={account.id}
               account={account}
@@ -186,6 +198,45 @@ export function AccountsCard({
           ))
         )}
       </CardContent>
+      <CardFooter className="bg-white">
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              Showing {startIndex + 1}–
+              {Math.min(startIndex + pageSize, accounts.length)} of{" "}
+              {accounts.length} accounts
+            </p>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="rounded-lg"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              >
+                <ChevronLeft />
+              </Button>
+
+              <span className="text-xs font-medium tabular-nums">
+                {currentPage} / {totalPages}
+              </span>
+
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="rounded-lg"
+                disabled={currentPage === totalPages}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+              >
+                <ChevronRight />
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardFooter>
     </Card>
   );
 }

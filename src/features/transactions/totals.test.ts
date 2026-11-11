@@ -3,7 +3,7 @@ import type { TransactionItem } from "./api";
 import {
   customDateRange,
   filterTransactionsByRange,
-  monthlyCashIn,
+  monthlyTotalsByType,
   percentChangeLabel,
   periodRange,
   previousPeriodRange,
@@ -233,15 +233,16 @@ describe("customDateRange", () => {
   });
 });
 
-describe("monthlyCashIn", () => {
-  it("buckets the last six months and highlights the current one", () => {
-    const data = monthlyCashIn(
+describe("monthlyTotalsByType", () => {
+  it("buckets cash in for the last six months and highlights the current one", () => {
+    const data = monthlyTotalsByType(
       [
         tx("1", "cash_in", "100", "0", "2026-10-05T10:00"),
         tx("2", "cash_in", "50", "0", "2026-09-05T10:00"),
         tx("3", "cash_in", "999", "0", "2026-04-30T10:00"), // outside 6 months
         tx("4", "cash_out", "70", "0", "2026-10-06T10:00"), // wrong type
       ],
+      "cash_in",
       6,
       NOW,
     );
@@ -251,5 +252,20 @@ describe("monthlyCashIn", () => {
     expect(data[4]).toEqual({ month: "Sep", total: 50, highlight: false });
     expect(data.map((datum) => datum.total)).not.toContain(999);
     expect(data.map((datum) => datum.total)).not.toContain(70);
+  });
+
+  it("buckets cash out volumes separately", () => {
+    const data = monthlyTotalsByType(
+      [
+        tx("1", "cash_out", "70", "0", "2026-10-06T10:00"),
+        tx("2", "cash_in", "100", "0", "2026-10-05T10:00"), // wrong type
+      ],
+      "cash_out",
+      6,
+      NOW,
+    );
+
+    expect(data[5]).toEqual({ month: "Oct", total: 70, highlight: true });
+    expect(data.map((datum) => datum.total)).not.toContain(100);
   });
 });

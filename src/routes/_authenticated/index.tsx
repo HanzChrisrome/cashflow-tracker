@@ -21,7 +21,6 @@ import { useAccounts } from "@/features/accounts/hooks";
 import { RecentTransactionsCard } from "@/features/transactions/RecentTransactionsCard";
 import { useTransactions } from "@/features/transactions/hooks";
 import {
-  monthlyCashIn,
   percentChangeLabel,
   periodRange,
   previousPeriodRange,
@@ -55,8 +54,6 @@ function OverviewPage() {
     current.outCentavos,
     previous.outCentavos,
   );
-  const chartData = monthlyCashIn(transactions);
-  const chartTotal = sumPeso(chartData.map((datum) => datum.total));
 
   return (
     <div className="space-y-6">
@@ -162,7 +159,7 @@ function OverviewPage() {
           )}
         </div>
         <div className="lg:col-span-3">
-          <ChartCard data={chartData} total={chartTotal} />
+          <ChartCard transactions={transactions} />
         </div>
       </div>
 
