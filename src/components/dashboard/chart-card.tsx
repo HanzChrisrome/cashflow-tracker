@@ -1,14 +1,21 @@
+import { useState } from "react";
 import { Bar, BarChart, Cell, XAxis } from "recharts";
 
-import { formatPeso } from "@/lib/format";
+import { cn } from "cn";
+import { formatPeso, sumPeso } from "@/lib/format";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { monthlyTotalsByType } from "@/features/transactions/totals";
+import type { TransactionItem } from "@/features/transactions/api";
+import type { TransactionType } from "@/features/transactions/schema";
 
 export type ChartDatum = {
   month: string;
@@ -16,33 +23,57 @@ export type ChartDatum = {
   highlight?: boolean;
 };
 
-export const placeholderChartData: ChartDatum[] = [
-  { month: "May", total: 18200 },
-  { month: "Jun", total: 22400 },
-  { month: "Jul", total: 19800 },
-  { month: "Aug", total: 26500 },
-  { month: "Sep", total: 23900 },
-  { month: "Oct", total: 42300, highlight: true },
-];
-
 const chartConfig = {
-  total: { label: "Cash In" },
+  total: { label: "Total" },
 } satisfies ChartConfig;
 
+const typeLabels: Record<TransactionType, string> = {
+  cash_in: "Cash In",
+  cash_out: "Cash Out",
+};
+
 export function ChartCard({
-  data = placeholderChartData,
-  total = "₱153,100",
+  transactions,
 }: {
-  data?: ChartDatum[];
-  total?: string;
+  transactions: TransactionItem[];
 }) {
+  const [type, setType] = useState<TransactionType>("cash_in");
+
+  const data = monthlyTotalsByType(transactions, type);
+  const total = sumPeso(data.map((datum) => datum.total));
   const highlighted = data.find((datum) => datum.highlight);
 
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Cash In</CardTitle>
+        <CardTitle>{typeLabels[type]}</CardTitle>
         <CardDescription>Last 6 months</CardDescription>
+        <CardAction>
+          <ToggleGroup
+            value={[type]}
+            onValueChange={(groupValue) => {
+              const next = groupValue[0];
+              if (next) {
+                setType(next as TransactionType);
+              }
+            }}
+            aria-label="Toggle chart type"
+            className="rounded-full bg-muted p-1"
+          >
+            {(["cash_in", "cash_out"] as const).map((option) => (
+              <ToggleGroupItem
+                key={option}
+                value={option}
+                className={cn(
+                  "h-8 rounded-full px-4 text-sm font-medium text-muted-foreground",
+                  "aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:hover:bg-primary-hover",
+                )}
+              >
+                {typeLabels[option]}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <p className="text-3xl font-bold tracking-tight tabular-nums">
@@ -59,17 +90,11 @@ export function ChartCard({
           )}
           <ChartContainer
             config={chartConfig}
-            className="aspect-auto h-56 w-full"
+            className="aspect-auto h-96 w-full"
           >
             <BarChart data={data} margin={{ top: 40, bottom: 4 }}>
               <defs>
-                <linearGradient
-                  id="cashInBarGradient"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
+                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="0%"
                     stopColor="var(--chart-2)"
@@ -93,9 +118,7 @@ export function ChartCard({
                   <Cell
                     key={datum.month}
                     fill={
-                      datum.highlight
-                        ? "var(--primary)"
-                        : "url(#cashInBarGradient)"
+                      datum.highlight ? "var(--primary)" : "url(#barGradient)"
                     }
                   />
                 ))}
